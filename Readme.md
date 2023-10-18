@@ -30,8 +30,6 @@ Options can be used in command line or set in the input file by `\set` command.
 *  `r|init_rec:1`      -- init mode: find files recursively
 *  `w|init_width=i`    -- init mode: max page width
 *  `init_img_mask=s`   -- init mode: mask for finding images
-*  `init_index_head=s` -- init mode: head for the index file
-*  `init_index_tail=s` -- init mode: tail for the index file
 *  `dump_opts:1`       -- DUMP options and exit
 *  `dump_defs:1`       -- DUMP definitions and exit
 *  `dump_inp:1`        -- DUMP input files and exit
@@ -55,6 +53,7 @@ Options can be used in command line or set in the input file by `\set` command.
 *  `map_zoom=i`        -- Map link zoom (default 6)
 *  `fig_lang=s`        -- fig language
 *  `fig_res=f`         -- fig resolution
+*  `html_headers:1`    -- generate html headers in the index file (default: 1)
 *  `html_charset=s`    -- add meta charset tag in html pages (not in index html)
 *  `html_viewport:1`   -- add meta viewport tag in html pages (not in index html)
 *  `html_screen_sw:1`  -- add "fit to screen" switch to html pages
@@ -161,6 +160,13 @@ Put text if two words (without spaces) are equal.
 
 * `\ifneq` `<word1>` `<word2>` `<text>` --
 Put text if two words (without spaces) are not equal.
+
+* `add` `<target>` `<text>` --
+Add the text to a target part of html: `index_head` for the head
+section of the index file, `index_begin` for beginning of html body,
+`index_end` for end of html body. `photo_head`, `photo_begin`,
+`photo_end` - for same parts of photo pages. Commands can be used
+multiple times in any part of the input file.
 
 ### PhotoSwipe support
 

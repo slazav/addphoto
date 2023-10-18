@@ -12,8 +12,6 @@ my %opts = (
   verbose          => 0,
   imgdir           => '.',
   init_img_mask    => '(.jpe?g$)|(.png$)|(.tiff?$)|(.gif)$',
-  init_index_head  => "<html><body>\n",
-  init_index_tail  => "</body></html>\n",
   init_width       => 800,
   init_tsort       => 1,
   init_days        => 1,
@@ -29,6 +27,7 @@ my %opts = (
   map_ref          => 'nakarte',
   map_zoom         => 13,
   fig_lang         => 'ru_RU.KOI8-R',
+  html_headers     => 1,
   html_charset     => 'koi8-r',
   html_viewport    => 1,
   html_screen_sw   => 1,
@@ -55,8 +54,6 @@ Getopt::Long::GetOptions(
   "r|init_rec:1"    => \$opts{init_rec},     # init mode: find files recursively
   "w|init_width=i"  => \$opts{init_width},         # init mode: max page width
   "init_img_mask=s" => \$opts{init_img_mask},      # init mode: mask for finding images
-  "init_index_head=s"  => \$opts{init_index_head}, # init mode: head for the index file
-  "init_index_tail=s"  => \$opts{init_index_tail}, # init mode: tail for the index file
   "dump_opts:1"     => \$opts{dump_opts},    # DUMP options
   "dump_defs:1"     => \$opts{dump_defs},    # DUMP definitions
   "dump_inp:1"      => \$opts{dump_inp},     # DUMP input files
@@ -80,6 +77,7 @@ Getopt::Long::GetOptions(
   "map_zoom=i"      => \$opts{map_zoom},     # Map link zoom (default 6)
   "fig_lang=s"      => \$opts{fig_lang},     # fig language
   "fig_res=f"       => \$opts{fig_res},      # fig resolution
+  "html_headers:1"  => \$opts{html_headers}, # generate html headers in the index file
   "html_charset=s"  => \$opts{html_charset}, # add meta charset tag in html pages (not in index html)
   "html_viewport:1" => \$opts{html_viewport},# add meta viewport tag in html pages (not in index html)
   "html_screen_sw:1"=> \$opts{html_screen_sw}, # add "fit to screen" switch to html pages
@@ -430,7 +428,6 @@ if ($opts{init} || $opts{init_only}){
   @list = sort {$files{$a}->{t} cmp $files{$b}->{t}} @list if $opts{init_tsort};
 
   print OUT "\\set imgdir $opts{imgdir}\n" if $opts{imgdir} ne '.';
-  print OUT $opts{init_index_head};
   foreach (@list) {
     my $d = $files{$_}->{d};
     my $w = $files{$_}->{w};
@@ -450,7 +447,6 @@ if ($opts{init} || $opts{init_only}){
     print OUT "\\photo $p\n";
   }
 
-  print OUT $opts{init_index_tail};
   close OUT;
   exit 0 if $opts{init_only};
 }
@@ -462,15 +458,15 @@ if ($opts{init} || $opts{init_only}){
 #################################################################
 ### Read index file, extract photo and header lists, set options.
 
-
-sub read_file($$$$);
+sub read_file($$$$$);
 
 # read input file
-sub read_file($$$$){
+sub read_file($$$$$){
   my $fname = shift;
   my $data  = shift;
   my $defs  = shift;
   my $opts  = shift;
+  my $add   = shift;
   open IN, $fname or
     die "can't open $fname: $!\n";
 
@@ -549,8 +545,14 @@ sub read_file($$$$){
       else { next; }
     }
 
-    if (/^\\inc\s+(\S+)/){  # inc command
-      read_file($1, $data, $defs, $opts);
+    if (/^\\inc\s+(\S+)/){ # include a file
+      read_file($1, $data, $defs, $opts, $add);
+      next;
+    }
+
+    if (/^\\add\s+(\S+)\s+(.*)/){ # add text
+      die "Unknown add target: $1" unless exists $add->{$1};
+      $add->{$1} .= "$2\n";
       next;
     }
 
@@ -573,7 +575,11 @@ sub read_file($$$$){
 
 my %defs;
 my @data;
-read_file($opts{infile}, \@data, \%defs, \%opts);
+my %add = (
+  'index_head' => '', 'index_begin' => '', 'index_end' => '',
+  'photo_head' => '', 'photo_begin' => '', 'photo_end' => '',
+);
+read_file($opts{infile}, \@data, \%defs, \%opts, \%add);
 
 # make separate array of photos
 my @ph;
@@ -919,6 +925,9 @@ for (my $i=0; $i<@ph; $i++){
       $opts{html_screen_sw} || '',
       $opts{html_arrows} || '',
       $opts{html_resize} || '',
+      $add{photo_head} || '',
+      $add{photo_begin} || '',
+      $add{photo_end} || '',
       $html_version)));
     # get old key
     if (open KEY, $ph->{htmpath}) {
@@ -957,10 +966,10 @@ for (my $i=0; $i<@ph; $i++){
     if ($opts{lang} eq 'select'){
       $init .= ' onload="lang_init()"';
       $top  .= qq*
-        <div align=right>
-          <span class="ru_control" id=lang_ru onclick="lang_set('ru')">ru</span>
-          <span class="en_control" id=lang_en onclick="lang_set('en')">en</span>
-        </div>*;
+      <div align=right>
+        <span class="ru_control" id=lang_ru onclick="lang_set('ru')">ru</span>
+        <span class="en_control" id=lang_en onclick="lang_set('en')">en</span>
+      </div>*;
     }
 
     # make title
@@ -1110,14 +1119,19 @@ for (my $i=0; $i<@ph; $i++){
     # write html
     open OUT, "> $ph->{htmpath}" or die "can't open $ph->{htmpath}: $!\n";
     print OUT qq*<html> <!--KEY:$key-->
-    <head>$head$scr$sty
+    <head>
+      $add{photo_head}$head$scr$sty
     </head>
-    <body bgcolor="#FFFFFF"$init>$top$main$btm
+    <body bgcolor="#FFFFFF"$init>
+      $add{photo_begin}$top$main$btm
+      $add{photo_end}
     </body>*;
     print OUT "\n</html>\n";
     close OUT;
   }
 }
+
+
 
 #################################################################
 #################################################################
@@ -1344,7 +1358,7 @@ if (!$opts{nohtml} && (
 
   close JS;
 }
-
+$add{index_head} .= "<link href='$imgdir/addphoto.css' rel='stylesheet'/>\n";
 
 
 #################################################################
@@ -1367,6 +1381,18 @@ my $htm2imgdir = rel_dir($htmldir, $opts{imgdir});
 open OUT, "> $of" or die "Can't open $of: $!\n";
 print STDERR "[Creating HTML index: $of]\n" if $opts{verbose};
 
+
+# print html header
+print OUT qq*<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+<head>
+$add{index_head}
+</head>
+<body>
+* if $opts{html_headers};
+
+print OUT $add{index_begin};
 
 sub write_pswp_data($){
   my $fd = shift;
@@ -1568,12 +1594,12 @@ addphoto_parse_hash();
 *;
 }
 
+write_pswp_data(*OUT) if $opts{pswp};
+
 foreach my $b (@data){
   if ($b->{type} eq 'photo') {
     $np++;
     my ($img, $title) = (${$b->{files}}[0], $b->{title});
-
-    write_pswp_data(*OUT) if $np==1 && $opts{pswp};
 
     # paths from html index
     my $htm2img = $htm2imgdir . $b->{imgdir2img};
@@ -1637,8 +1663,15 @@ foreach my $b (@data){
   }
 }
 print OUT "</div>\n" if $in_row; # close row
+
+print OUT $add{index_end};
+
+# print html tail
+print OUT qq*
+</body>
+</html>
+* if $opts{html_headers};
+
 close OUT;
 
 print STDERR "[Done: $np photos, $nh headers]\n" if $opts{verbose};
-
-
