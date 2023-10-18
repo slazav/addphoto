@@ -4,6 +4,10 @@ use strict;
 use warnings;
 use Getopt::Long qw(GetOptions);
 
+# Resize images
+#   V.Zavjalov, 2009-2023
+
+
 my $def_scale = '800:600:10000';
 my $def_quality = 90;
 
@@ -37,7 +41,7 @@ Example (for scale=800:600:10000):
 - 12800x400 -> 10000x312
 - 800x400 -> no changes
 
-Report bugs to <slazav\@altlinux.org>
+Report bugs to <vl.zavjalov at gmail.com>
 *;
 exit(1);
 }

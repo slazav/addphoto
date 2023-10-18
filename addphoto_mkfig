@@ -3,6 +3,15 @@
 use strict;
 use warnings;
 
+# Wrap image in a FIG file (useful for drawing marks on the picture in
+# xfig program). If file exists it is not modified.
+# I use this script togeter with gqview image viewer by adding to
+# .gqviewrc something like this:
+#   external_8: "fig" "file=%p; addphoto_mkfig $file; xfig ${file%.*}.fig &"
+
+#   V.Zavjalov, 2009-2023
+
+
 my $k=14.2875; # convert pixel -> fig units;
 
 #################################################################
@@ -13,9 +22,9 @@ $0 -- create fig with image for drawing marks
 Usage: $0 <file>
 
 You can add this to your gqviewrc:
-external_8: "fig" "file=\%p; $0 \$file; xfig \${file\%.\*}.fig &"
+  external_8: "fig" "file=\%p; $0 \$file; xfig \${file\%.\*}.fig &"
 
-Report bugs to <slazav\@altlinux.org>
+Report bugs to <vl.zavjalov at gmail.com>
 *;
 exit(1);
 }
