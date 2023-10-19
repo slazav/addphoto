@@ -798,7 +798,7 @@ for (my $i=0; $i<@ph; $i++){
     }
     ## add thumbnail mark if needed
     thmark_add($ph->{th1path}) if $ph->{use_mrk} && !thmark_check($ph->{th1path});
-    thmark_add($ph->{th1path}) if $#files >= 0;
+    thmark_add($ph->{th1path}) if $#files>=0 && !thmark_check($ph->{th1path});
     ## th1 size
     ($ph->{th1_w}, $ph->{th1_h}) = image_size($ph->{th1path});
   }
