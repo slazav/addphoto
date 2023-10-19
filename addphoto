@@ -317,9 +317,10 @@ sub get_exif{
 ## These two functions can add and check mark. For remothing mark
 ## just regenerate thumbnail...
 ## exiv2 and mogrify (from ImageMagick) programs are needed.
-sub thmark_add($){
+sub thmark_add($$){
   my $f=shift;
-  `mogrify -fill red -draw 'circle 10,10,12,12' "$f"`;
+  my $c=shift;
+  `mogrify -fill $c -draw 'circle 10,10,12,12' "$f"`;
   `exiv2 -c "<marked>" "$f" 2>/dev/null`;
 }
 sub thmark_check($){
@@ -797,8 +798,8 @@ for (my $i=0; $i<@ph; $i++){
          --quality "$opts{quality}" --rm_exif "$opts{th1_rm_exif}" "$ph->{imgpath}" "$ph->{th1path}"`;
     }
     ## add thumbnail mark if needed
-    thmark_add($ph->{th1path}) if $ph->{use_mrk} && !thmark_check($ph->{th1path});
-    thmark_add($ph->{th1path}) if $#files>=0 && !thmark_check($ph->{th1path});
+    thmark_add($ph->{th1path}, 'red') if $ph->{use_mrk} && !thmark_check($ph->{th1path});
+    thmark_add($ph->{th1path}, 'magenta') if $#files>=0 && !thmark_check($ph->{th1path});
     ## th1 size
     ($ph->{th1_w}, $ph->{th1_h}) = image_size($ph->{th1path});
   }
