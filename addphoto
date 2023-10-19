@@ -725,23 +725,33 @@ if ($opts{cleanup}){
   exit 0;
 }
 
-
+#################################################################
+#################################################################
+# convert language RUEN({text}, {text})
+{
+  my $q1=$opts{lang_q1};
+  my $q2=$opts{lang_q2};
+  foreach my $b (@data){
+    for my $f ('text','title'){
+      next unless exists $b->{$f};
+      $b->{$f}=~s|RUEN\(\s*$q1(.*)$q2\s*,\s*$q1(.*)$q2\)|<span class=ru>$1</span><span class=en>$2</span>|gs;
+    }
+  }
+  foreach my $f (keys %add){
+    $add{$f}=~s|RUEN\(\s*$q1(.*)$q2\s*,\s*$q1(.*)$q2\)|<span class=ru>$1</span><span class=en>$2</span>|gs;
+  }
+}
 #################################################################
 #################################################################
 ### Update files, collect information
 print STDERR "[Updating files...]\n" if $opts{verbose};
 for (my $i=0; $i<@ph; $i++){
   my $ph = $ph[$i];
-  my $q1=$opts{lang_q1};
-  my $q2=$opts{lang_q2};
 
   # remove html tags from text, for html alt atribute
   $ph->{atitle} = $ph->{title};
-  $ph->{atitle}=~s|RUEN\(\s*$q1(.*)$q2\s*,\s*$q1.*$q2\)|$1|g;
   $ph->{atitle}=~s/<[^>]*>//g;
   $ph->{atitle}=~s/[<>\']//g; #`
-
-  $ph->{title}=~s|RUEN\(\s*$q1(.*)$q2\s*,\s*$q1(.*)$q2\)|<span class=ru>$1</span><span class=en>$2</span>|g;
 
   my @files = @{$ph->{files}};
   foreach (@files) {die "error: can't find file: $_\n" unless -f "$imgdir$_";}
