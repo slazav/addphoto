@@ -27,11 +27,11 @@ Scripts for making html photo albums
 %changelog
 * Wed Oct 18 2023 Vladislav Zavjalov <slazav@altlinux.org> 2.3-alt1
 - This is a stable version currently used in slazav.xyz site.
-  I have added a few new feactures recently, keeping it
-  compatable with old files and parameters. Also it
-  is moved to a separate gthub repo slazab/ph_scripts -> slazav/addphoto
+  I have added a few new features recently, keeping it
+  compatible with old files and parameters. Also it
+  is moved to a separate github repo slazab/ph_scripts -> slazav/addphoto
   and renamed addphoto2 -> addphoto.
-  I'm planning to start working on incompatable version 3.0.
+  I'm planning to start working on incompatible version 3.0.
 
 * Mon Dec 28 2009 Vladislav Zavjalov <slazav@altlinux.org> 0.3-alt1
 - renames
