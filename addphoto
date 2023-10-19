@@ -51,8 +51,8 @@ my %opts = (
   html_screen_sw   => 1,
   html_arrows      => 1,
   html_resize      => 1,
-  ruen_q1          => '\`',
-  ruen_q2          => '\'',
+  lang_q1          => '\`',
+  lang_q2          => '\'',
 );
 Getopt::Long::Configure("no_ignore_case");
 Getopt::Long::GetOptions(
@@ -98,8 +98,8 @@ Getopt::Long::GetOptions(
   "html_screen_sw:1"=> \$opts{html_screen_sw}, # add "fit to screen" switch to html pages
   "html_arrows:1"   => \$opts{html_arrows},  # add navigation (including left/right arrows) to html pages
   "html_resize:1"   => \$opts{html_resize},  # resizable images in html pages (default state of "size" button)
-  "ruen_q1=s"       => \$opts{ruen_q1},      # opening quote for RUEN command
-  "ruen_q2=s"       => \$opts{ruen_q2},      # closing quote for RUEN command
+  "lang_q1=s"       => \$opts{lang_q1},      # opening quote for RUEN command
+  "lang_q2=s"       => \$opts{lang_q2},      # closing quote for RUEN command
 ) or pod2usage(1);
 
 my $html_version = '2.3'; # changes when regenerating of html pages is needed
@@ -731,8 +731,8 @@ if ($opts{cleanup}){
 print STDERR "[Updating files...]\n" if $opts{verbose};
 for (my $i=0; $i<@ph; $i++){
   my $ph = $ph[$i];
-  my $q1=$opts{ruen_q1};
-  my $q2=$opts{ruen_q2};
+  my $q1=$opts{lang_q1};
+  my $q2=$opts{lang_q2};
 
   # remove html tags from text, for html alt atribute
   $ph->{atitle} = $ph->{title};
