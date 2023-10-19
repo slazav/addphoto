@@ -862,8 +862,8 @@ for (my $i=0; $i<@ph; $i++){
         $cmd=qq*
             ( "$ph->{imgpath}"
               ( "$ph->{mrkpath}" -alpha extract -blur 0.8 -threshold 15 -resize 50% )
-              +matte -compose copy-opacity -composite -blur 2 )
-            ( "$ph->{mrkpath}" -resize 50% )
+              -alpha off -compose copy-opacity -composite -blur 2 )
+              ( "$ph->{mrkpath}" -resize 50% )
             -compose over -composite
             "$ph->{mrkpath}"*;
       }
@@ -875,7 +875,7 @@ for (my $i=0; $i<@ph; $i++){
             ( "$ph->{mrkpath}"
               ( -clone 0 +matte +level-colors white.
                 ( -clone 0 -alpha extract -blur 4x3 -level 0%,50% )
-                +matte -compose copy-opacity -composite )
+                -alpha off -compose copy-opacity -composite )
               -compose dst-over -composite
               -resize 50% )
             -compose over -composite
@@ -889,7 +889,7 @@ for (my $i=0; $i<@ph; $i++){
             ( "$ph->{mrkpath}" +level 0,30%
               ( -clone 0 +matte +level-colors white
                 ( -clone 0 -alpha extract -blur 4x3 -level 0%,50% )
-                +matte -compose copy-opacity -composite )
+                -alpha off -compose copy-opacity -composite )
               -compose dst-over -composite
               -resize 50% )
             -compose over -composite
@@ -900,7 +900,7 @@ for (my $i=0; $i<@ph; $i++){
 #            "$ph->{mrkpath}" +level 0,30%
 #            ( -clone 0 +matte +level-colors white
 #              ( -clone 0 -alpha extract -blur 4x3 -level 0%,50% )
-#               +matte -compose copy-opacity -composite )
+#               -alpha off -compose copy-opacity -composite )
 #            -compose dst-over -composite
 #            -resize 50%
 #            "$ph->{mrkpath}"*;
