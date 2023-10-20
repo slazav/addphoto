@@ -734,11 +734,11 @@ if ($opts{cleanup}){
   foreach my $b (@data){
     for my $f ('text','title'){
       next unless exists $b->{$f};
-      $b->{$f}=~s|RUEN\(\s*$q1(.*)$q2\s*,\s*$q1(.*)$q2\)|<span class=ru>$1</span><span class=en>$2</span>|gs;
+      $b->{$f}=~s|RUEN\(\s*$q1(.*?)$q2\s*,\s*$q1(.*?)$q2\)|<span class=ru>$1</span><span class=en>$2</span>|gs;
     }
   }
   foreach my $f (keys %add){
-    $add{$f}=~s|RUEN\(\s*$q1(.*)$q2\s*,\s*$q1(.*)$q2\)|<span class=ru>$1</span><span class=en>$2</span>|gs;
+    $add{$f}=~s|RUEN\(\s*$q1(.*?)$q2\s*,\s*$q1(.*?)$q2\)|<span class=ru>$1</span><span class=en>$2</span>|gs;
   }
 }
 #################################################################
