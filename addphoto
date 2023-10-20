@@ -717,14 +717,19 @@ if ($opts{cleanup}){
 
 #################################################################
 #################################################################
-# convert language RUEN({text}, {text})
+# expand functions: RU{}, EN{}, WWW{}
 {
   my $q1=$opts{lang_q1};
   my $q2=$opts{lang_q2};
   foreach my $b (@data){
     for my $f ('text','title'){
       next unless exists $b->{$f};
+      # to be removed!
       $b->{$f}=~s|RUEN\(\s*$q1(.*?)$q2\s*,\s*$q1(.*?)$q2\)|<span class=ru>$1</span><span class=en>$2</span>|gs;
+
+      $b->{$f}=~s|RU\{(.*?)\}|<span class=ru>$1</span>|gs;
+      $b->{$f}=~s|EN\{(.*?)\}|<span class=en>$1</span>|gs;
+      $b->{$f}=~s|WWW\{(.*?)\}|<a href=$1>$1</a>|gs;
     }
   }
 }
