@@ -603,7 +603,7 @@ $imgdir =~ s|^(\./)+||;
 #################################################################
 # DUMP call - dump options, defs, parsed file and exit
 if ($opts{dump_opts}){
-  foreach my $k (keys %opts){
+  foreach my $k (sort keys %opts){
     my $v = defined $opts{$k}? $opts{$k}: "undef";
     print "$k: $v\n";
   }
@@ -611,7 +611,7 @@ if ($opts{dump_opts}){
 }
 
 if ($opts{dump_defs}){
-  foreach my $k (keys %defs){
+  foreach my $k (sort keys %defs){
     my $v = defined $defs{$k}? $defs{$k}: "undef";
     print "$k: $v\n";
   }
