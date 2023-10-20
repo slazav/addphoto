@@ -476,15 +476,14 @@ if ($opts{init} || $opts{init_only}){
 #################################################################
 ### Read index file, extract photo and header lists, set options.
 
-sub read_file($$$$$);
+sub read_file($$$$);
 
 # read input file
-sub read_file($$$$$){
+sub read_file($$$$){
   my $fname = shift;
   my $data  = shift;
   my $defs  = shift;
   my $opts  = shift;
-  my $add   = shift;
   open IN, $fname or
     die "can't open $fname: $!\n";
 
@@ -501,6 +500,7 @@ sub read_file($$$$$){
     last if /^\\end/;  # stop at \end command
     next if /^\\#/;    # skip comments
 
+    # expanding variables
     foreach my $k (keys %{$defs}){
       s/\$\{$k\}/$defs->{$k}/g;
     }
@@ -564,13 +564,12 @@ sub read_file($$$$$){
     }
 
     if (/^\\inc\s+(\S+)/){ # include a file
-      read_file($1, $data, $defs, $opts, $add);
+      read_file($1, $data, $defs, $opts);
       next;
     }
 
     if (/^\\add\s+(\S+)\s+(.*)/){ # add text
-      die "Unknown add target: $1" unless exists $add->{$1};
-      $add->{$1} .= "$2\n";
+      push @{$data}, {type=>'add', target=>$1, text=>$2};
       next;
     }
 
@@ -593,17 +592,8 @@ sub read_file($$$$$){
 
 my %defs;
 my @data;
-my %add = (
-  'index_head' => '', 'index_begin' => '', 'index_end' => '',
-  'photo_head' => '', 'photo_begin' => '', 'photo_end' => '',
-);
-read_file($opts{infile}, \@data, \%defs, \%opts, \%add);
+read_file($opts{infile}, \@data, \%defs, \%opts);
 
-# make separate array of photos
-my @ph;
-foreach my $b (@data){
-  push @ph, $b if $b->{type} eq 'photo';
-}
 
 # now all configuration should be read.
 my $imgdir = "$opts{basedir}/$opts{imgdir}/";
@@ -737,10 +727,29 @@ if ($opts{cleanup}){
       $b->{$f}=~s|RUEN\(\s*$q1(.*?)$q2\s*,\s*$q1(.*?)$q2\)|<span class=ru>$1</span><span class=en>$2</span>|gs;
     }
   }
-  foreach my $f (keys %add){
-    $add{$f}=~s|RUEN\(\s*$q1(.*?)$q2\s*,\s*$q1(.*?)$q2\)|<span class=ru>$1</span><span class=en>$2</span>|gs;
-  }
 }
+
+
+#################################################################
+#################################################################
+# make add structure
+my %add = (
+  'index_head' => '', 'index_begin' => '', 'index_end' => '',
+  'photo_head' => '', 'photo_begin' => '', 'photo_end' => '',
+);
+foreach my $b (@data){
+  next unless $b->{type} eq 'add';
+  die "Unknown add target: $1" unless exists $add{$b->{target}};
+  $add{$b->{target}} .= "$b->{text}\n";
+}
+
+# make separate array of photos
+my @ph;
+foreach my $b (@data){
+  push @ph, $b if $b->{type} eq 'photo';
+}
+
+
 #################################################################
 #################################################################
 ### Update files, collect information
