@@ -51,8 +51,6 @@ my %opts = (
   html_screen_sw   => 1,
   html_arrows      => 1,
   html_resize      => 1,
-  lang_q1          => '\`',
-  lang_q2          => '\'',
 );
 Getopt::Long::Configure("no_ignore_case");
 Getopt::Long::GetOptions(
@@ -98,8 +96,6 @@ Getopt::Long::GetOptions(
   "html_screen_sw:1"=> \$opts{html_screen_sw}, # add "fit to screen" switch to html pages
   "html_arrows:1"   => \$opts{html_arrows},  # add navigation (including left/right arrows) to html pages
   "html_resize:1"   => \$opts{html_resize},  # resizable images in html pages (default state of "size" button)
-  "lang_q1=s"       => \$opts{lang_q1},      # opening quote for RUEN command
-  "lang_q2=s"       => \$opts{lang_q2},      # closing quote for RUEN command
 ) or pod2usage(1);
 
 my $html_version = '2.3'; # changes when regenerating of html pages is needed
@@ -719,14 +715,9 @@ if ($opts{cleanup}){
 #################################################################
 # expand functions: RU{}, EN{}, WWW{}
 {
-  my $q1=$opts{lang_q1};
-  my $q2=$opts{lang_q2};
   foreach my $b (@data){
     for my $f ('text','title'){
       next unless exists $b->{$f};
-      # to be removed!
-      $b->{$f}=~s|RUEN\(\s*$q1(.*?)$q2\s*,\s*$q1(.*?)$q2\)|<span class=ru>$1</span><span class=en>$2</span>|gs;
-
       $b->{$f}=~s|RU\{(.*?)\}|<span class=ru>$1</span>|gs;
       $b->{$f}=~s|EN\{(.*?)\}|<span class=en>$1</span>|gs;
       $b->{$f}=~s|WWW\{(.*?)\}|<a href=$1>$1</a>|gs;
