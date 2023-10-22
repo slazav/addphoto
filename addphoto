@@ -530,6 +530,7 @@ sub read_file($$$$){
     }
 
     if (/^\\set\s+(\S+)\s+(.*)/){  # set command
+      die "Unknown perameter: $1\n" unless exists $opts->{$1};
       $opts->{$1} = $2;
       next;
     }
@@ -718,9 +719,11 @@ if ($opts{cleanup}){
   foreach my $b (@data){
     for my $f ('text','title'){
       next unless exists $b->{$f};
+      # Order is important: RU/EN sould not be inside
+      # WWW.
+      $b->{$f}=~s|WWW\{(.*?)\}|<a href=$1>$1</a>|gs;
       $b->{$f}=~s|RU\{(.*?)\}|<span class=ru>$1</span>|gs;
       $b->{$f}=~s|EN\{(.*?)\}|<span class=en>$1</span>|gs;
-      $b->{$f}=~s|WWW\{(.*?)\}|<a href=$1>$1</a>|gs;
     }
   }
 }
