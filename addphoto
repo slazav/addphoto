@@ -1758,7 +1758,7 @@ foreach my $b (@data){
       split(/\s+/, `ph_resize --scale "$opts{th1_size}" --dryrun --printres "$b->{imgpath}" /dev/null`);
     }
 
-    # open a row only if align = center
+    # start a new row only if align = center
     if ($b->{align} eq 'center') {
       print OUT "<div class=addphoto-row>\n" unless $in_row;
       $in_row=1;
@@ -1768,13 +1768,12 @@ foreach my $b (@data){
     }
     my $a_attrs=" name='ph$np'";
     if (!$opts{pswp}){
-      if ($opts{nohtm}) { $a_attrs .= " href='$imgfile'"; }
+      if ($opts{nohtml}) { $a_attrs .= " href='$imgfile'"; }
       else              { $a_attrs .= " href='$htmfile'"; }
     }
     else {
       $a_attrs .= " onclick='addphoto_open_pswp($np, this)'";
     }
-
     print OUT "<div class=addphoto-img-$b->{align}><a$a_attrs>\n";
     print OUT "<img src='$th_file' alt='$b->{atitle}'" .
               " width=$b->{th1_w} height=$b->{th1_h}".
