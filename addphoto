@@ -501,7 +501,14 @@ sub read_file($$$$){
     # expanding variables
     foreach my $k (keys %{$defs}){
       s/\$\{$k\}/$defs->{$k}/g;
+      s/\$\{$k:\+([^\}]*)\}/$1/g;
+      s/\$\{$k:\-([^\}]*)\}/$defs->{$k}/g;
+
     }
+    # unset variables
+    s/\$\{[[:word:]]+\}//g;
+    s/\$\{[[:word:]]+:\+([^\}]*)\}//g;
+    s/\$\{[[:word:]]+:\-([^\}]*)\}/$1/g;
 
     if (/^\\photo([lr]?)\s+(\S+)\s*(.*)/){     # images
       die "wrong context for photo command: $ctx" if $ctx ne '';

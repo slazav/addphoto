@@ -161,7 +161,10 @@ Keep additional files in the cleanup mode.
 patters are parsed with perl glob command. It can contain `*`, `?`, `{...}`.
 
 * `\def` `<name>` `<text>` --
-Define a variable. Later in the text `${<name>}` will be replaced by `<text>`.
+Define a variable. Later in the text following constructions can be used:
+- `${<name>}` expands to `<text>` if variable is defined and to empty string if not.
+- `${<name>:-<word>}` expands to `<text>` if variable is defined and to `<word>` if not.
+- `${<name>:+<word>}` expands to `<word>` if variable is defined and to empty string if not.
 
 * `\inc` `<file name>` --
 Include a file.
