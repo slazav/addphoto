@@ -534,13 +534,13 @@ sub read_file($$$$){
       next;
     }
 
-    if (/^\\set\s+(\S+)\s+(.*)/){  # set command
+    if (/^\\set\s+([[:word:]]+)\s+(.*)/){  # set command
       die "Unknown perameter: $1\n" unless exists $opts->{$1};
       $opts->{$1} = $2;
       next;
     }
 
-    if (/^\\def\s+(\S+)\s+(.*)/){  # def command
+    if (/^\\def\s+([[:word:]]+)\s+(.*)/){  # def command
       $defs->{$1} = $2;
       next;
     }
