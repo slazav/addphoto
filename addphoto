@@ -703,7 +703,7 @@ if ($opts{cleanup}){
   # add index file if needed
   $keep{$opts{infile}} = 1 if $opts{imgdir} eq '.';
   $keep{"$opts{basedir}/$opts{html}"} = 1 if $opts{imgdir} eq '.';
-  $keep{$_} = 1 foreach (glob "${imgdir}addphoto.*");
+  $keep{$_} = 1 foreach (glob "${imgdir}addphoto_*");
 
   ### get files to delete
   my @del;
@@ -774,6 +774,8 @@ foreach my $b (@data){
 #################################################################
 ### Update files, collect information
 print STDERR "[Updating files...]\n" if $opts{verbose};
+$opts{_use_marks} = 0;
+$opts{_use_multi} = 0;
 for (my $i=0; $i<@ph; $i++){
   my $ph = $ph[$i];
 
@@ -819,8 +821,10 @@ for (my $i=0; $i<@ph; $i++){
   unlink($ph->{htmpath}) if $opts{nohtml};
 
   ## do we want to create marks?
-  $ph->{use_mrk} = -r $ph->{figpath} && $opts{mark_pref};
-  $opts{_use_mrk} = 1 if $ph->{use_mrk};
+  $ph->{_use_marks} = -r $ph->{figpath} && $opts{mark_pref};
+  $ph->{_use_multi} = $#files>=0;
+  $opts{_use_marks} = 1 if $ph->{_use_marks};
+  $opts{_use_multi} = 1 if $ph->{_use_multi};
 
   ############################################################
   ## update thumbnail image:
@@ -831,14 +835,14 @@ for (my $i=0; $i<@ph; $i++){
       if $opts{th1_pref} =~ m|/$| && ! -d "$imgdir$d0$opts{th1_pref}";
     ## if th1 file is older then the image OR red mark should be cleaned, update th1
     if (isolder($ph->{th1path}, $ph->{imgpath}) ||
-        (thmark_check($ph->{th1path}) && ! $ph->{use_mrk} && $#files<0)){
+        (thmark_check($ph->{th1path}) && ! $ph->{_use_marks} && !$ph->{_use_multi})){
       print STDERR "  updating thumbnail: " if $opts{verbose};
       `ph_resize --scale "$opts{th1_size}" --verbose "$opts{verbose}"\\
          --quality "$opts{quality}" --rm_exif "$opts{th1_rm_exif}" "$ph->{imgpath}" "$ph->{th1path}"`;
     }
     ## add thumbnail mark if needed
-    thmark_add($ph->{th1path}, 'red') if $ph->{use_mrk} && !thmark_check($ph->{th1path});
-    thmark_add($ph->{th1path}, 'magenta') if $#files>=0 && !thmark_check($ph->{th1path});
+    thmark_add($ph->{th1path}, 'red') if $ph->{_use_marks} && !thmark_check($ph->{th1path});
+    thmark_add($ph->{th1path}, 'magenta') if $ph->{_use_multi} && !thmark_check($ph->{th1path});
     ## th1 size
     ($ph->{th1_w}, $ph->{th1_h}) = image_size($ph->{th1path});
   }
@@ -874,7 +878,7 @@ for (my $i=0; $i<@ph; $i++){
 
   ############################################################
   ## update marks if fig-file exists and newer then the mark file
-  if ($ph->{use_mrk}) {
+  if ($ph->{_use_marks}) {
     ## if $opts{mark_pref} is a folder, create it
     mkdir "$imgdir$d0$opts{mark_pref}"
       if $opts{mark_pref} =~ m|/$| && ! -d "$imgdir$d0$opts{mark_pref}";
@@ -973,7 +977,7 @@ for (my $i=0; $i<@ph; $i++){
     $key = Digest::MD5::md5_hex(join("\n",(
       $imgref, $w, $h, @files,
       $ph->{title}, $purl, $uurl, $nurl,
-      ($ph->{use_mrk} ? $opts{mstyle}:''),
+      ($ph->{_use_marks} ? $opts{mstyle}:''),
       $ph->{use_th1}, $ph->{use_th2},
       $opts{map_ref} || '', $opts{map_zoom},
       $opts{lang} || '',
@@ -1002,7 +1006,6 @@ for (my $i=0; $i<@ph; $i++){
     print STDERR "  creating html file: $ph->{htmpath}\n" if $opts{verbose};
 
     my $scr="";
-    my $init="";
     my $top="";
     my $btm="";
     my $head="";
@@ -1014,14 +1017,28 @@ for (my $i=0; $i<@ph; $i++){
       <meta name="viewport" content="width=device-width, initial-scale=1.0">*
         if $opts{html_viewport};
     $head .=qq*
-      <link href="$ph->{img2imgdir}addphoto.css" rel="stylesheet"/>*;
+      <link href="$ph->{img2imgdir}addphoto_photo.css" rel="stylesheet"/>*;
     $head .=qq*
-      <script type='text/JavaScript' src='$ph->{img2imgdir}addphoto.js'></script>*
-      if $opts{lang} eq 'select' || $opts{html_screen_sw} || $ph->{use_mrk} || $opts{html_arrows};
+      <link href="$ph->{img2imgdir}addphoto_lang.css" rel="stylesheet"/>*
+        if $opts{lang} eq 'select';
+    $head .=qq*
+      <script type="text/JavaScript" src="$ph->{img2imgdir}addphoto_nav.js"></script>*
+      if $opts{html_arrows};
+    $head .=qq*
+      <script type="text/JavaScript" src="$ph->{img2imgdir}addphoto_lang.js"></script>*
+      if $opts{lang} eq 'select';
+    $head .=qq*
+      <script type="text/JavaScript" src="$ph->{img2imgdir}addphoto_marks.js"></script>*
+      if $ph->{_use_marks};
+    $head .=qq*
+      <script type="text/JavaScript" src="$ph->{img2imgdir}addphoto_multi.js"></script>*
+      if $ph->{_use_multi};
+    $head .=qq*
+      <script type="text/JavaScript" src="$ph->{img2imgdir}addphoto_fit.js"></script>*
+      if $opts{html_screen_sw};
 
     # make language switch
     if ($opts{lang} eq 'select'){
-      $init .= ' onload="lang_init()"';
       $top  .= qq*
       <div align=right>
         <span class="ru_control" id=lang_ru onclick="lang_set('ru')">ru</span>
@@ -1058,95 +1075,67 @@ for (my $i=0; $i<@ph; $i++){
     <link rel="previous" href="$purl">* if $purl;
     $head .= qq*
     <link rel="next" href="$nurl">* if $nurl;
-
-    # switch language button
-#    if ($opts{lang} eq 'select'){
-#      my $msg = get_msg('sw_lang');
-#      $nav .= qq*
-#        <div class=addphoto-btn onclick="lang_sw()">$msg</div>*;
-#    }
-
     $nav .= "\n    <br>";
 
     # fit-to-screen button
     if ($opts{html_screen_sw}) {
       my $msg = get_msg('sw_size');
       $nav .= qq*
-        <div class=addphoto-btn id=addphoto-screen-sw onclick="switch_scr()">$msg</div>*;
+        <div class=addphoto-btn id=addphoto-fit-btn onclick="switch_fit()">$msg</div>*;
       $sty .= qq[
         /* fit-to-screen button */
-        #addphoto-screen-sw {display: none;}
+        #addphoto-fit-btn {display: none;}
         \@media screen and (max-width: ${w}px) {
-          #addphoto-screen-sw { display: inline;} }];
+          #addphoto-fit-btn { display: inline;} }];
     }
 
     # switch images button
-    if ($#files>=0){
+    if ($ph->{_use_multi}){
       my $msg = get_msg('sw_imgs');
       $nav .= qq*
-        <div class=addphoto-btn onclick="sw_imgs()">$msg</div>*;
+        <div class=addphoto-btn onclick="switch_multi()">$msg</div>*;
     }
 
     # switch marks button
-    if ($ph->{use_mrk}){
+    if ($ph->{_use_marks}){
       my $msg = get_msg('sw_mark');
       $nav .= qq*
         <div class=addphoto-btn onclick="switch_mrk()">$msg</div>*;
     }
 
-
     $top .= qq*
     <div class=addphoto-nav>$nav
     </div>*;
 
-    # image class: img1 will fit to screen, img2 will be of original size
-    my $img_class = $opts{html_resize} ? 'img1':'img2';
+    my $mw = $opts{html_resize} ? 'maxwidth:100%;':'';
 
     # main image
     my $main=qq*
-      <img id=img0 class=$img_class style='width:${w}px;height:auto;'
-           src='$imgref' alt='$ph->{atitle}' onclick='on_click(event)'>*;
+        <img id=img0 class="addphoto-img" style='width:${w}px;$mw'
+           src='$imgref' alt='$ph->{atitle}'>*;
 
     # marks overlay
-    if ($ph->{use_mrk}){
-      $main = qq*
-      <div style="position: relative;" onclick='on_click(event)'>
-        <img id=img0 class=$img_class style='width:${w}px;height:auto;'
-             src='$imgref' alt='$ph->{atitle}'>
-        <img id=marks class=$img_class style='width:${w}px;height:auto;'
-             src='$ph->{mrkname}'>
-      </div>*;
+    if ($ph->{_use_marks}){
+      $main .= qq*
+        <img id=marks class="addphoto-img" style='width:${w}px;$mw'
+             src='$ph->{mrkname}'>*;
     }
 
     # multiple images:
-    if ($#files>=0){
-      my $nn=$#files+2;
-      $scr .= qq*    <script type="text/JavaScript">
-        var nv = 0;
-        function sw_imgs(){
-          nv=(nv+1)\%$nn;
-          for (var i=1;i<$nn;i++){
-            document.getElementById("img"+i).style.visibility=
-              i<=nv?'visible':'hidden'}}
-        function sw_imgs_key(event){
-          if (event.code == 'KeyI'){ sw_imgs(); }}
-        document.addEventListener('keydown', sw_imgs_key);
-      </script>*;
-      $main = qq*
-      <div style="position: relative;" onclick='on_click(event)'>
-         <img id=img0 class=$img_class style='width:${w}px;height:auto;'
-              src='$imgref' alt='$ph->{atitle}'>*;
+    if ($ph->{_use_multi}){
       for(my $i=1; $i<=$#files+1; $i++){
-        $sty .= qq*
-           #img$i { position: absolute; left: 0px; top: 0px; visibility: hidden; }*;
         my ($d, $b, $e) = path_split($files[$i-1]);
         $main .= qq*
-          <img id="img$i" class=$img_class style='width:${w}px;height:auto;'
+          <img id="img$i" class="addphoto-img" style='width:${w}px;visibility:hidden;$mw'
              src='$b$e'>*;
       }
-      $main .= qq*
-      </div>*;
     }
+
+    # wrap images into a div
+    $main = qq*
+      <div style="position: relative;" class="clickable">$main
+      </div>*;
+
 
     # info from exif
     my $exif = '';
@@ -1175,15 +1164,20 @@ for (my $i=0; $i<@ph; $i++){
 
     # write html
     open OUT, "> $ph->{htmpath}" or die "can't open $ph->{htmpath}: $!\n";
-    print OUT qq*<html> <!--KEY:$key-->
-    <head>
-      $add{photo_head}$head$scr$sty
-    </head>
-    <body bgcolor="#FFFFFF"$init>
-      $add{photo_begin}$top$main$btm
-      $add{photo_end}
-    </body>*;
-    print OUT "\n</html>\n";
+print OUT qq*<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!--KEY:$key-->
+<head>
+$head$scr$sty
+$add{photo_head}
+</head>
+<body>
+$add{photo_begin}
+$top$main$btm
+$add{photo_end}
+</body>
+</html>
+*;
     close OUT;
   }
 }
@@ -1192,42 +1186,21 @@ for (my $i=0; $i<@ph; $i++){
 
 #################################################################
 #################################################################
-### Write common files: addphoto.js, addphoto.css
+### Write common files: addphoto_*.js, addphoto_*.css
 
-open STY, "> ${imgdir}addphoto.css" or die
-  "can't open file: ${imgdir}addphoto.css: $!\n";
+open STY, "> ${imgdir}addphoto_index.css" or die
+  "can't open file: ${imgdir}addphoto_index.css: $!\n";
 print STY qq[
-/* common decorations */
-a {text-decoration:none;}
-.img1 {max-width:100%; height:auto;}
-.img2 {max-width:''; height:auto;}
-.addphoto-nav {
-  content:'';
-  display:block;
-  width:100%;
+a {
+  text-decoration:none;
 }
-.addphoto-btn {
-  color:blue;cursor:pointer;
-  font: bold 10pt sans-serif;
-  padding:2 10px;
-  display:inline-block;
+body {
+  background-color: white;
+  max-width:850px;
+  margin: auto;
+  padding: 20px;
 }
-.addphoto-title {
-  font: 16pt sans-serif;
-  margin: 0px; padding-bottom: 20px;
-  border-bottom: 1px solid #E0E0E0;
-  width: 100%;
-}
-.addphoto-info {
-  font: bold 8pt sans-serif;
-}
-/* marks layer */
-#marks {
-  position:absolute;
-  left: 0px; top: 0px;
-  visibility:visible;
-}
-/* for index html*/
+
 .addphoto-caption {
   font-style:italic;
   min-height:1.5ex;
@@ -1268,154 +1241,239 @@ a {text-decoration:none;}
   max-width:100%;
   height:auto;
 }
+body
 ];
-
-print STY qq[
-/* Language control (see opts{lang}) */
-.ru_control,.en_control {color:blue;cursor:pointer; }
-.ru {display:inline;}
-.en {display:none;}
-] if $opts{lang};
 close STY;
 
-if (!$opts{nohtml} && (
-      $opts{lang} eq 'select' ||
-      $opts{html_screen_sw} ||
-      $opts{_use_mrk} ||
-      $opts{html_arrows} )) {
-  open JS, "> ${imgdir}addphoto.js" or die
-    "can't open file: ${imgdir}addphoto.js: $!\n";
+if (!$opts{nohtm}){
+  open STY, "> ${imgdir}addphoto_photo.css" or die
+    "can't open file: ${imgdir}addphoto_photo.css: $!\n";
+  print STY qq[
+a {
+  text-decoration:none;
+}
+body {
+  background-color: white;
+}
+
+.addphoto-img {
+  height:auto;
+  position: absolute; left: 0px; top: 0px;
+}
+
+.addphoto-nav {
+  content:'';
+  display:block;
+  width:100%;
+}
+.addphoto-btn {
+  color:blue;cursor:pointer;
+  font: bold 10pt sans-serif;
+  padding:2 10px;
+  display:inline-block;
+}
+.addphoto-title {
+  font: 16pt sans-serif;
+  margin: 0px; padding-bottom: 20px;
+  border-bottom: 1px solid #E0E0E0;
+  width: 100%;
+}
+.addphoto-info {
+  font: bold 8pt sans-serif;
+}
+/* marks layer */
+#marks {
+  position:absolute;
+  left: 0px; top: 0px;
+  visibility:visible;
+}
+];
+  close STY;
+}
+
+### languge support
+if ($opts{lang} eq 'select'){
+  open STY, "> ${imgdir}addphoto_lang.css" or die
+    "can't open file: ${imgdir}addphoto_lang.css: $!\n";
+  print STY qq*
+.ru_control,.en_control {color:blue;cursor:pointer; }
+.ru {display:inline;} .en {display:none;}
+*;
+  close STY;
+
+  open JS, "> ${imgdir}addphoto_lang.js" or die
+    "can't open file: ${imgdir}addphoto_lang.js: $!\n";
 
   print JS qq*
-    var langs=['ru', 'en'];
-    // get default language
-    function lang_def(){
-      lvars = [window.navigator.languages, window.navigator.language, window.navigator.userLanguage]
-      hasru = false;
-      for (const v of lvars) { hasru ||= v && v.includes("ru"); }
-      return hasru ? 'ru':'en';
+  var langs=['ru', 'en'];
+  // get default language
+  function lang_def(){
+    lvars = [window.navigator.languages, window.navigator.language, window.navigator.userLanguage]
+    hasru = false;
+    for (const v of lvars) { hasru ||= v && v.includes("ru"); }
+    return hasru ? 'ru':'en';
+  }
+  // save language to storage/cookies
+  function lang_save(v){
+    // use storage
+    if (typeof(Storage) !== "undefined") {
+      localStorage.setItem("lang", v);
     }
-    // save language to storage/cookies
-    function lang_save(v){
-      // use storage
-      if (typeof(Storage) !== "undefined") {
-        localStorage.setItem("lang", v);
-      }
+  }
+  // load language from storage/cookies
+  function lang_load(){
+    if (typeof(Storage) !== "undefined") {
+      v = localStorage.getItem("lang");
+      return v? v: lang_def();
+    } else {
+      return lang_def();
     }
-    // load language from storage/cookies
-    function lang_load(){
-      if (typeof(Storage) !== "undefined") {
-        v = localStorage.getItem("lang");
-        return v? v: lang_def();
-      } else {
-        return lang_def();
-      }
+  }
+  // set language from button
+  function lang_set(lang){
+    lang_save(lang);
+    for (var i=0; i<langs.length; i++){
+      document.getElementById("lang_"+langs[i]).style.fontWeight=
+        (langs[i]==lang) ? 'bold':'normal';
+      var els=document.getElementsByClassName(langs[i]);
+      for (var j=0; j<els.length; j++){
+        els[j].style.display = (langs[i]==lang) ? 'inline':'none'; }
     }
-    // set language from button
-    function lang_set(lang){
-      lang_save(lang);
-      for (var i=0; i<langs.length; i++){
-        document.getElementById("lang_"+langs[i]).style.fontWeight=
-          (langs[i]==lang) ? 'bold':'normal';
-        var els=document.getElementsByClassName(langs[i]);
-        for (var j=0; j<els.length; j++){
-          els[j].style.display = (langs[i]==lang) ? 'inline':'none'; }
-      }
-    }
-    // set language after loading document
-    function lang_init(){
-      var urlParams = new URLSearchParams(window.location.search);
-      var l = urlParams.get('lang');
-      if (l==null) l=lang_load()
-      lang_set(l);
-    }
-    // switch language
-    function lang_sw(){
-      lang_set(lang_load()=='ru'? 'en':'ru');
-    }
-    // switch language with 't' key
-    function lang_key(event){
-      if (event.code == 'KeyT'){lang_sw();}
-    }
-    document.addEventListener('keydown', lang_key);* if $opts{lang} eq 'select';
+  }
+  // set language after loading document
+  function lang_init(){
+    var urlParams = new URLSearchParams(window.location.search);
+    var l = urlParams.get('lang');
+    if (l==null) l=lang_load()
+    lang_set(l);
+  }
 
-  print JS qq*
-    // switch image zoom
-    function switch_scr(){
-      // note that result of getElementsByClassName is HTMLcollection!
-      let i1 = Array.from(document.getElementsByClassName("img1"));
-      let i2 = Array.from(document.getElementsByClassName("img2"));
-      for (img of i1){ img.className = 'img2'; }
-      for (img of i2){ img.className = 'img1'; }
-    }* if $opts{html_screen_sw};
+  // switch language
+  function lang_sw(){ lang_set(lang_load()=='ru'? 'en':'ru'); }
 
-  print JS qq*
-    // switch image marks
-    function switch_mrk(){
-      var e = document.getElementById("marks");
-      if (!marks) {return;}
-      e.style.visibility = e.style.visibility=='hidden' ? 'visible':'hidden';
-    }* if $opts{_use_mrk};
-
-  print JS qq*
-    // key navigation
-    function process_key(event){
-
-      var rel = "";
-      if (event.ctrlKey && event.code == 'ArrowRight'){
-        rel = "next";
-      }
-      else if (event.ctrlKey && event.code == 'ArrowLeft'){
-        rel = "previous";
-      }
-      else if (event.code == 'Escape'){
-        rel = "top";
-      }
-      else if (event.code == 'Enter'){
-        switch_mrk();
-      }
-      else if (event.code == 'KeyM'){
-        switch_mrk();
-      }
-      else if (event.code == 'KeyS'){
-        switch_scr();
-      }
-
-      if (rel == "") return;
-
-      var links = document.getElementsByTagName("link");
-      for (var i = 0; i < links.length; i++) {
-        if (links[i].rel != rel) continue;
-        event.preventDefault();
-        event.stopPropagation();
-        window.location.href = links[i].href;
-        return;
-      }
-    }
-
-    function on_click(event){
-      var image = document.getElementById("image");
-      var w1 = img0.width;
-      var h1 = img0.height;
-      var xs = window.scrollX;
-      var ys = window.scrollY;
-      var x0 = img0.getBoundingClientRect().left + xs;
-      var y0 = img0.getBoundingClientRect().top + ys;
-      switch_scr();
-      var w2 = img0.width;
-      var h2 = img0.height;
-      var kx = 1.0\*w2/w1;
-      var ky = 1.0\*h2/h1;
-      var xm  = event.clientX;
-      var ym  = event.clientY;
-      window.scroll(x0-xm + kx\*(xs-x0+xm), y0-ym + ky\*(ys-y0+ym));
-    }
-
-    document.addEventListener('keydown', process_key);    *if $opts{html_arrows};
-
+  // switch language with 't' key
+  function lang_key(event){ if (event.code == 'KeyT'){lang_sw();} }
+  window.addEventListener('keydown', lang_key);
+  window.addEventListener('load', lang_init);
+*;
   close JS;
 }
-$add{index_head} .= "<link href='${imgdir}addphoto.css' rel='stylesheet'/>\n";
+
+### switching marks
+if (!$opts{nohtml} && $opts{_use_marks}) {
+  open JS, "> ${imgdir}addphoto_marks.js" or die
+    "can't open file: ${imgdir}addphoto_marks.js: $!\n";
+  print JS qq*
+  // switch image marks
+  function switch_mrk(){
+    var e = document.getElementById("marks");
+    if (!marks) {return;}
+    e.style.visibility = e.style.visibility=='hidden' ? 'visible':'hidden';
+  }
+  // switch marks with 'm' key
+  function mark_key(event){
+    if (event.code == 'Enter' || event.code == 'KeyM'){ switch_mrk(); }
+  }
+  window.addEventListener('keydown', mark_key);
+*;
+  close JS;
+}
+
+### fit-to-screen switch
+if (!$opts{nohtml} && $opts{html_screen_sw}) {
+  open JS, "> ${imgdir}addphoto_fit.js" or die
+    "can't open file: ${imgdir}addphoto_fit.js: $!\n";
+  print JS qq*
+  // fit-to-screen switch
+  function switch_fit(){
+    for (img of document.getElementsByClassName("addphoto-img")){
+      img.style.maxWidth = getComputedStyle(img).maxWidth == '100%'? null:'100%';
+    }
+  }
+  // switch and scroll on click
+  function click_fit(event){
+    var img0 = document.getElementById("img0");
+    var w1 = img0.width;
+    var h1 = img0.height;
+    var xs = window.scrollX;
+    var ys = window.scrollY;
+    var x0 = img0.getBoundingClientRect().left + xs;
+    var y0 = img0.getBoundingClientRect().top + ys;
+    switch_fit();
+    var w2 = img0.width;
+    var h2 = img0.height;
+    var kx = 1.0\*w2/w1;
+    var ky = 1.0\*h2/h1;
+    var xm  = event.clientX;
+    var ym  = event.clientY;
+    window.scroll(x0-xm + kx\*(xs-x0+xm), y0-ym + ky\*(ys-y0+ym));
+  }
+  function set_click(){
+    for (i of document.getElementsByClassName("clickable")){
+      i.addEventListener('click', click_fit); } }
+  window.addEventListener('load', set_click);
+  // switch on S key
+  function fit_key(event){ if (event.code == 'KeyS'){ switch_fit(); }}
+  window.addEventListener('keydown', fit_key);
+*;
+  close JS;
+}
+
+
+if (!$opts{nohtml} && $opts{html_arrows}) {
+  open JS, "> ${imgdir}addphoto_nav.js" or die
+    "can't open file: ${imgdir}addphoto_nav.js: $!\n";
+
+  print JS qq*
+  // key navigation
+  function nav_key(event){
+
+    var rel = "";
+    if (event.ctrlKey && event.code == 'ArrowRight'){
+      rel = "next";
+    }
+    else if (event.ctrlKey && event.code == 'ArrowLeft'){
+      rel = "previous";
+    }
+    else if (event.code == 'Escape'){
+      rel = "top";
+    }
+    if (rel == "") return;
+
+    var links = document.getElementsByTagName("link");
+    for (var i = 0; i < links.length; i++) {
+      if (links[i].rel != rel) continue;
+      event.preventDefault();
+      event.stopPropagation();
+      window.location.href = links[i].href;
+      return;
+    }
+  }
+  window.addEventListener('keydown', nav_key);
+*;
+  close JS;
+}
+
+if (!$opts{nohtml} && $opts{_use_multi}) {
+  open JS, "> ${imgdir}addphoto_multi.js" or die
+    "can't open file: ${imgdir}addphoto_multi.js: $!\n";
+
+  print JS qq*
+  // switch multiple images
+  var nv = 0;
+  function switch_multi(){
+    nn=document.getElementsByClassName('addphoto-img').length;
+    nv=(nv+1)\%nn;
+    for (var i=1;i<nn;i++){
+      document.getElementById("img"+i).style.visibility=
+        i<=nv?'visible':'hidden'}}
+  function multi_key(event){
+    if (event.code == 'KeyI'){ switch_multi(); }}
+  window.addEventListener('keydown', multi_key);
+*;
+  close JS;
+}
+
 
 
 #################################################################
@@ -1454,24 +1512,20 @@ if ($opts{html_headers}) {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">*
     if $opts{html_viewport};
 
-  ## index_head context
   print OUT qq*
-<!-- index_head -->
+  <link href="${imgdir}addphoto_index.css" rel="stylesheet"/>*;
+
+  print OUT qq*
+  <link href="${imgdir}addphoto_lang.css" rel="stylesheet"/>
+  <script type="text/JavaScript" src="${imgdir}addphoto_lang.js"></script>*
+    if $opts{lang} eq 'select';
+
+  print OUT qq*
 $add{index_head}
-<!-- end of index_head -->*
-  if $add{index_head} ne '';
-
-
-  print OUT qq*
-  </head>
-  <body>*;
+</head>
+<body>
+$add{index_begin}*;
 }
-
-print OUT qq*
-<!-- index_begin context -->
-$add{index_begin}
-<!-- end of index_begin context -->
-* if $add{index_begin} ne '';
 
 sub write_pswp_data($){
   my $fd = shift;
@@ -1655,7 +1709,7 @@ function addphoto_parse_hash() {
     print  $fd  "\n    th0: {src: \"$imgfile\", w:$ph->{img_w}, h:$ph->{img_h}}";
     print  $fd ",\n    th1: {src: \"$th1file\", w:$ph->{th1_w}, h:$ph->{th1_h}}" if $ph->{use_th1};
     print  $fd ",\n    th2: {src: \"$th2file\", w:$ph->{th2_w}, h:$ph->{th2_h}}" if $ph->{use_th2};
-    print  $fd ",\n    ovl: \"$mrkfile\"" if $ph->{use_mrk};
+    print  $fd ",\n    ovl: \"$mrkfile\"" if $ph->{_use_marks};
     print  $fd ",\n    title: \"$ph->{title}\"" if $ph->{title};
     print  $fd ",\n    dat: \"$ph->{time}\"" if $ph->{time};
     printf $fd ",\n    alt: %.1f", $ph->{alt} if $ph->{alt};
@@ -1743,15 +1797,9 @@ foreach my $b (@data){
 }
 print OUT "</div>\n" if $in_row; # close row
 
-# index_end context
-print OUT qq*
-<!-- index_end context -->
-$add{index_end}
-<!-- end of index_end context -->
-* if $add{index_end} ne '';
-
 # print html tail
 print OUT qq*
+$add{index_end}
 </body>
 </html>
 * if $opts{html_headers};
