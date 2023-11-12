@@ -1485,7 +1485,16 @@ my $nh=0;
 
 my $of = "$opts{basedir}/$opts{html}";
 $of = '/dev/stdout' if $opts{html_stdout};
-$of = "| $opts{html_filter} > $of" if $opts{html_filter};
+
+if ($opts{html_filter}){
+  open OUT, "|-", "$opts{html_filter} > $of"
+    or die "Can't open $opts{html_filter} > $of: $!\n";
+}
+else {
+  open OUT, ">", "$of"
+    or die "Can't open $of: $!\n";
+}
+print STDERR "[Creating HTML index: $of]\n" if $opts{verbose};
 
 ## how to go from html index to image dir:
 my $htmldir = "$opts{html}";
@@ -1493,8 +1502,6 @@ $htmldir =~ s/[^\/]*$//;
 $htmldir =~ s|/+$||; # remove trailing /
 my $htm2imgdir = rel_dir($htmldir, $opts{imgdir});
 
-open OUT, "> $of" or die "Can't open $of: $!\n";
-print STDERR "[Creating HTML index: $of]\n" if $opts{verbose};
 
 
 # print html header
