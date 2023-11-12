@@ -1434,16 +1434,38 @@ print STDERR "[Creating HTML index: $of]\n" if $opts{verbose};
 
 
 # print html header
-print OUT qq*<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+if ($opts{html_headers}) {
+  print OUT qq*<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html>
-<head>
-$add{index_head}
-</head>
-<body>
-* if $opts{html_headers};
+<head>*;
 
-print OUT $add{index_begin};
+  print OUT qq*
+  <meta http-equiv="Content-Type" content="text/html; charset=$opts{html_charset}"/>*
+    if $opts{html_charset};
+
+  print OUT qq*
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">*
+    if $opts{html_viewport};
+
+  ## index_head context
+  print OUT qq*
+<!-- index_head -->
+$add{index_head}
+<!-- end of index_head -->*
+  if $add{index_head} ne '';
+
+
+  print OUT qq*
+  </head>
+  <body>*;
+}
+
+print OUT qq*
+<!-- index_begin context -->
+$add{index_begin}
+<!-- end of index_begin context -->
+* if $add{index_begin} ne '';
 
 sub write_pswp_data($){
   my $fd = shift;
@@ -1715,7 +1737,12 @@ foreach my $b (@data){
 }
 print OUT "</div>\n" if $in_row; # close row
 
-print OUT $add{index_end};
+# index_end context
+print OUT qq*
+<!-- index_end context -->
+$add{index_end}
+<!-- end of index_end context -->
+* if $add{index_end} ne '';
 
 # print html tail
 print OUT qq*
