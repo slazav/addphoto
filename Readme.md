@@ -177,6 +177,9 @@ Define a variable. Later in the text following constructions can be used:
   - `${<name>}` expands to `<text>` if variable is defined and to empty string if not.
   - `${<name>:-<word>}` expands to `<text>` if variable is defined and to `<word>` if not.
   - `${<name>:+<word>}` expands to `<word>` if variable is defined and to empty string if not.
+Pre-defined variables:
+  - `${INNAME}` -- name (without path) of the input file
+  - `${INBASE}` -- base name (without path and extension) of the input file
 
 * `\inc` `<file name>` --
 Include a file.
@@ -196,13 +199,13 @@ Put text if two words (without spaces) are not equal.
 * `ctx` `[<name>]` -- switch context. By using this command
 you can put text into different parts of html. Possible context names:
   - (empty) - default context
-  - 'index_head'  - head section of the index file,
-  - 'index_begin' - beginning of html body in the index file,
-  - 'index_end'   - end of html body in the index file,
-  - 'photo_head'  - head section of photo pages
-  - 'photo_begin' - beginning of html body in photo pages
-  - 'photo_end'   - end of html body in photo pages
-  - 'none' - skip the text
+  - `index_head`  - head section of the index file,
+  - `index_begin` - beginning of html body in the index file,
+  - `index_end`   - end of html body in the index file,
+  - `photo_head`  - head section of photo pages
+  - `photo_begin` - beginning of html body in photo pages
+  - `photo_end`   - end of html body in photo pages
+  - `none` - skip the text
 
 Commands `\photo*`, `\h*`, `\toc`, `\inc` are allowed only in the default context.
 

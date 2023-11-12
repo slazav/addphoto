@@ -613,7 +613,7 @@ sub read_file($$$$){
   }
 }
 
-my %defs;
+my %defs = ('INNAME' => "$inbase$inext", 'INBASE' => $inbase);
 my @data;
 read_file($infile, \@data, \%defs, \%opts);
 
