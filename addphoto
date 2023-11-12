@@ -3,7 +3,6 @@
 use strict;
 use warnings;
 use Getopt::Long;
-use Pod::Usage;
 use Digest::MD5;
 
 #################################################################
@@ -100,12 +99,12 @@ Getopt::Long::GetOptions(
   "html_screen_sw:1"=> \$opts{html_screen_sw}, # add "fit to screen" switch to html pages
   "html_arrows:1"   => \$opts{html_arrows},  # add navigation (including left/right arrows) to html pages
   "html_resize:1"   => \$opts{html_resize},  # resizable images in html pages (default state of "size" button)
-) or pod2usage(1);
+) or die "bad option";
 
 my $html_version = '2.3'; # changes when regenerating of html pages is needed
 
-pod2usage(-exitval => 0, -verbose => 2) if $opts{help};
-pod2usage(1) if @ARGV!=1;
+#pod2usage(-exitval => 0, -verbose => 2) if $opts{help};
+die "Usage: $0 [options] <input file>" if @ARGV!=1;
 
 # index file name
 my $infile = shift;
