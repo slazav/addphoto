@@ -474,12 +474,14 @@ if ($opts{init} || $opts{init_only}){
 
 sub read_file($$$$);
 
+
 # read input file
 sub read_file($$$$){
   my $fname = shift;
   my $data  = shift;
   my $defs  = shift;
   my $opts  = shift;
+  my $ctx='';
   open IN, $fname or
     die "can't open $fname: $!\n";
 
@@ -502,6 +504,7 @@ sub read_file($$$$){
     }
 
     if (/^\\photo([lr]?)\s+(\S+)\s*(.*)/){     # images
+      die "wrong context for photo command: $ctx" if $ctx ne '';
       my $al = ($1 eq 'r'?'right':($1 eq 'l'? 'left':'center'));
       my $name = $2;
       my $title = $3 || '';
@@ -515,11 +518,13 @@ sub read_file($$$$){
     }
 
     if (/^\\h([1-4])(r?)\s+(.*)/){  # headers
+      die "wrong context for header command: $ctx" if $ctx ne '';
       push @{$data}, {type=>'head', depth=>$1, ruler=>($2 eq 'r'), title=>$3};
       next;
     }
 
     if (/^\\toc/){  # toc command
+      die "wrong context for toc command: $ctx" if $ctx ne '';
       push @{$data}, {type=>'toc'};
       next;
     }
@@ -561,12 +566,17 @@ sub read_file($$$$){
     }
 
     if (/^\\inc\s+(\S+)/){ # include a file
+      die "wrong context for include command: $ctx" if $ctx ne '';
       read_file($1, $data, $defs, $opts);
       next;
     }
 
-    if (/^\\add\s+(\S+)\s+(.*)/){ # add text
-      push @{$data}, {type=>'add', target=>$1, text=>$2};
+    if (/^\\ctx(\s+(\S+))?/){ # switch context
+      $ctx = defined($2)? $2:'';
+      die "unknown context: $ctx"
+        unless grep(/^$ctx$/,
+          ('', 'index_head', 'index_begin', 'index_end',
+               'photo_head', 'photo_begin', 'photo_end', 'none'));
       next;
     }
 
@@ -578,11 +588,13 @@ sub read_file($$$$){
     s/^\\// if /^\\\\/; # remove quoted '\'
 
     # add/append text block
-    if ($#{$data}>0 && $data->[$#{$data}]->{type} eq 'text') {
+    if ($#{$data}>0 &&
+        $data->[$#{$data}]->{type} eq 'text' &&
+        $data->[$#{$data}]->{ctx} eq $ctx) {
       $data->[$#{$data}]->{text} .= $_;
     }
     else {
-      push @{$data}, {type=>'text', text=>$_};
+      push @{$data}, {type=>'text', ctx=>$ctx, text=>$_};
     }
   }
 }
@@ -737,9 +749,9 @@ my %add = (
   'photo_head' => '', 'photo_begin' => '', 'photo_end' => '',
 );
 foreach my $b (@data){
-  next unless $b->{type} eq 'add';
-  die "Unknown add target: $1" unless exists $add{$b->{target}};
-  $add{$b->{target}} .= "$b->{text}\n";
+  next unless $b->{type} eq 'text';
+  $add{$b->{ctx}} .= "$b->{text}"
+    if exists($add{$b->{ctx}});
 }
 
 # make separate array of photos
@@ -1692,7 +1704,7 @@ foreach my $b (@data){
       html_toc(*OUT, \@data);
       next;
     }
-    if ($b->{type} eq 'text'){
+    if ($b->{type} eq 'text' && $b->{ctx} eq ''){
       print OUT $b->{text};
       next;
     }

@@ -1,8 +1,8 @@
-## addphoto -- Script for making html texts with photos (for slazav.xyz site)
+## addphoto -- Script for generating html with photos (for slazav.xyz site)
 
 ### Usage
 
-`addphoto [option] [input file]`
+`addphoto [options] [input file]`
 
 Program reads input file and creates html.
 
@@ -16,10 +16,9 @@ Options can be used in command line or set in the input file by `\set` command.
 
 *  `h|help`            -- print help message
 *  `v|verbose:1`       -- be verbose
-*  `D|imgdir=s`        -- image dir (relative to index file location, default .)
-*  `H|html=s`          -- html file (relative to index file location)
-*  `html_filter=s`     -- filter for index html
-*  `html_stdout:1`     -- print index html to stdout instead of writing to file. html option is still needed.
+
+Init mode.
+
 *  `I|init` --
   INIT MODE. In this mode a new index file is created with all images
   located in the image folder. Then the normal mode is started.
@@ -29,13 +28,31 @@ Options can be used in command line or set in the input file by `\set` command.
 *  `d|init_days:1`     -- init mode: add day headers
 *  `r|init_rec:1`      -- init mode: find files recursively
 *  `w|init_width=i`    -- init mode: max page width
-*  `init_img_mask=s`   -- init mode: mask for finding images
+*  `init_img_mask=s`   -- init mode: regular expression for finding filenames with images.
+                          Default: `(.jpe?g$)|(.png$)|(.tiff?$)|(.gif)$`
+
+Dump mode. Read a file and dump different information.
+This could be useful for collecting meta information from texts (if it is defined with `\def`
+command), or for debugging.
+
 *  `dump_opts:1`       -- DUMP options and exit
 *  `dump_defs:1`       -- DUMP definitions and exit
 *  `dump_inp:1`        -- DUMP input files and exit
+
+Cleanup mode:
+
 *  `C|cleanup`         -- CLEANUP MODE: remove unused files and exit
 *  `f|force:1`         -- cleanup mode: do not ask before deleting files
 *  `dryrun:1`          -- cleanup mode: do not delete files
+
+Folders and output file
+
+*  `D|imgdir=s`        -- image dir (relative to index file location, default .)
+*  `H|html=s`          -- html file (relative to index file location)
+*  `html_filter=s`     -- filter for index html
+*  `html_stdout:1`     -- print index html to stdout instead of writing to file. html option is still needed.
+
+
 *  `th1_pref=s`        -- Small thumbnail prefix (can end with /), empty for no thumbnails
 *  `th1_size=s`        -- Small thumbnail size (S1:S2:S3, see elsewhere)
 *  `th1_rm_exif:1`     -- Remove exif-data from small thumbnails (default)
@@ -105,7 +122,7 @@ prefix which can be set by options --mark_pref. If the prefix ends with
 
 Commands are started at the beginning of line with '\' symbol. Symbol '\' in
 the beginning can be protected by putting another '\' in front of it.
-Line can be joined with the next one by putting '/' at the end.
+Line can be joined with the next one by putting '\' at the end.
 Other lines copied without changes. Commands:
 
 * `\photo` `<file(s)>` `<title>` --
@@ -161,12 +178,19 @@ Put text if two words (without spaces) are equal.
 * `\ifneq` `<word1>` `<word2>` `<text>` --
 Put text if two words (without spaces) are not equal.
 
-* `add` `<target>` `<text>` --
-Add the text to a target part of html: `index_head` for the head
-section of the index file, `index_begin` for beginning of html body,
-`index_end` for end of html body. `photo_head`, `photo_begin`,
-`photo_end` - for same parts of photo pages. Commands can be used
-multiple times in any part of the input file.
+* `ctx` `[<name>]` -- switch context. By using this command
+you can put text into different parts of html. Possible context names:
+ - (empty) - default context
+ - 'index_head'  - head section of the index file,
+ - 'index_begin' - beginning of html body in the index file,
+ - 'index_end'   - end of html body in the index file,
+ - 'photo_head'  - head section of photo pages
+ - 'photo_begin' - beginning of html body in photo pages
+ - 'photo_end'   - end of html body in photo pages
+ - 'none' - skip the text
+
+Commands `\photo*`, `\h*`, `\toc`, `\inc` are allowed only in the default context.
+
 
 ### PhotoSwipe support
 
