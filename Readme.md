@@ -31,13 +31,14 @@ Init mode.
 *  `init_img_mask=s`   -- init mode: regular expression for finding filenames with images.
                           Default: `(.jpe?g$)|(.png$)|(.tiff?$)|(.gif)$`
 
-Dump mode. Read a file and print different information.
-This could be useful for collecting meta information from texts (if it is defined with `\def`
-command), or for debugging.
+Dump mode. Read a file and print different information. This could be
+useful for collecting meta information from texts (if it is defined with
+`\def` command), or for debugging.
 
 *  `dump_opts:1`       -- DUMP options and exit
 *  `dump_defs:1`       -- DUMP definitions and exit
 *  `dump_inp:1`        -- DUMP input files and exit
+*  `expand=s`          -- expand a string using variables defined in the file
 
 Cleanup mode:
 

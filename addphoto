@@ -26,6 +26,7 @@ my %opts = (
   dump_opts        => 0,
   dump_defs        => 0,
   dump_inp         => 0,
+  expand           => '',
   cleanup          => 0,
   force            => 0,
   dryrun           => 0,
@@ -72,6 +73,7 @@ Getopt::Long::GetOptions(
   "dump_opts"       => \$opts{dump_opts},    # DUMP options
   "dump_defs"       => \$opts{dump_defs},    # DUMP definitions
   "dump_inp"        => \$opts{dump_inp},     # DUMP input files
+  "expand=s"        => \$opts{expand},       # Expand variables in a string
   "C|cleanup"       => \$opts{cleanup},      # CLEANUP MODE: remove unused files and exit
   "f|force:1"       => \$opts{force},        # cleanup mode: do not ask before deleting files
   "dryrun:1"        => \$opts{dryrun},       # cleanup mode: do not delete files
@@ -482,6 +484,23 @@ if ($opts{init} || $opts{init_only}){
 sub read_file($$$$);
 
 
+sub expand($$){
+  my $defs  = shift;
+  my $in    = shift;
+  # expanding variables
+  foreach my $k (keys %{$defs}){
+    $in=~s/\$\{$k\}/$defs->{$k}/g;
+    $in=~s/\$\{$k:\+([^\}]*)\}/$1/g;
+    $in=~s/\$\{$k:\-([^\}]*)\}/$defs->{$k}/g;
+
+  }
+  # unset variables
+  $in=~s/\$\{[[:word:]]+\}//g;
+  $in=~s/\$\{[[:word:]]+:\+([^\}]*)\}//g;
+  $in=~s/\$\{[[:word:]]+:\-([^\}]*)\}/$1/g;
+  return $in
+}
+
 # read input file
 sub read_file($$$$){
   my $fname = shift;
@@ -506,16 +525,7 @@ sub read_file($$$$){
     next if /^\\#/;    # skip comments
 
     # expanding variables
-    foreach my $k (keys %{$defs}){
-      s/\$\{$k\}/$defs->{$k}/g;
-      s/\$\{$k:\+([^\}]*)\}/$1/g;
-      s/\$\{$k:\-([^\}]*)\}/$defs->{$k}/g;
-
-    }
-    # unset variables
-    s/\$\{[[:word:]]+\}//g;
-    s/\$\{[[:word:]]+:\+([^\}]*)\}//g;
-    s/\$\{[[:word:]]+:\-([^\}]*)\}/$1/g;
+    $_ = expand($defs, $_);
 
     if (/^\\photo([lr]?)\s+(\S+)\s*(.*)/){     # images
       die "wrong context for photo command: $ctx" if $ctx ne '';
@@ -626,6 +636,14 @@ my $imgdir = $opts{imgdir};
 my $datadir = $opts{datadir};
 $imgdir = "$inpath$imgdir" unless $imgdir =~ /^\//;
 $datadir = "$inpath$datadir" unless $datadir =~ /^\//;
+
+#################################################################
+#################################################################
+# EXPAND call
+if ($opts{expand}){
+  print expand(\%defs, $opts{expand});
+  exit 0;
+}
 
 #################################################################
 #################################################################
