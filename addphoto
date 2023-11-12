@@ -646,14 +646,17 @@ if ($opts{dump_inp}){
       next;
     }
     if ($b->{type} eq 'text') {
+      print "  ctx:    ", $b->{ctx}, "\n" if $b->{ctx} ne '';
       print "  length: ", length($b->{text}), "\n";
       next;
     }
   }
   exit 0;
 }
-exit 0 if $opts{dump_opts} or $opts{dump_inp};
 
+exit 0 if $opts{dump_opts}
+       or $opts{dump_defs}
+       or $opts{dump_inp};
 
 #################################################################
 #################################################################
