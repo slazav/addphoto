@@ -31,7 +31,7 @@ Init mode.
 *  `init_img_mask=s`   -- init mode: regular expression for finding filenames with images.
                           Default: `(.jpe?g$)|(.png$)|(.tiff?$)|(.gif)$`
 
-Dump mode. Read a file and dump different information.
+Dump mode. Read a file and print different information.
 This could be useful for collecting meta information from texts (if it is defined with `\def`
 command), or for debugging.
 
@@ -47,20 +47,32 @@ Cleanup mode:
 
 Folders and output file
 
-*  `D|imgdir=s`        -- image dir (relative to index file location, default .)
-*  `H|html=s`          -- html file (relative to index file location)
-*  `html_filter=s`     -- filter for index html
-*  `html_stdout:1`     -- print index html to stdout instead of writing to file. html option is still needed.
+*  `D|imgdir=s` -- image dir, relative to index file location, default:
+input file name without last extension.
 
+*  `datadir=s` -- data dir (for *.js, *.css files), relative to index
+file location, default: same as imgdir. If you have many texts it could be
+better to use same datadir for all of them.
+
+*  `H|html=s`  -- Name of html file, relative to index file location,
+can contain folders. Default: input file name with last extension
+replaces with `.htm`.
+
+*  `html_filter=s` -- Filter for index html, for example `m4 defs.m4 -`
+
+*  `html_stdout:1` -- Print index html to stdout instead of writing to
+file. html option is still needed.
+
+Other options
 
 *  `th1_pref=s`        -- Small thumbnail prefix (can end with /), empty for no thumbnails
-*  `th1_size=s`        -- Small thumbnail size (S1:S2:S3, see elsewhere)
+*  `th1_size=s`        -- Small thumbnail size (S1:S2:S3, see ph_resize)
 *  `th1_rm_exif:1`     -- Remove exif-data from small thumbnails (default)
 *  `th2_pref=s`        -- Large thumbnail prefix (can and with /), empty for no thumbnails
-*  `th2_size=s`        -- Large thumbnail size (S1:S2:S3, see elsewhere)
+*  `th2_size=s`        -- Large thumbnail size (S1:S2:S3, see ph_resize)
 *  `th2_rm_exif:1`     -- Remove exif-data from large thumbnails (default)
-*  `mark_pref=s`       -- Image marks prefix (can and with /), empty for no marks
-*  `html_pref=s`       -- Image marks prefix (can and with /), empty for no marks
+*  `mark_pref=s`       -- Image marks prefix (can contain /), empty for no marks
+*  `html_pref=s`       -- Image marks prefix (can contain /), empty for no marks
 *  `nohtml:1`          -- Do not generate hmtl pages for images
 *  `mstyle=s`          -- Mark style
 *  `l|lang=s`          -- Language (ru, en, select)
@@ -71,10 +83,10 @@ Folders and output file
 *  `fig_lang=s`        -- fig language
 *  `fig_res=f`         -- fig resolution
 *  `html_headers:1`    -- generate html headers in the index file (default: 1)
-*  `html_charset=s`    -- add meta charset tag in html pages (not in index html)
-*  `html_viewport:1`   -- add meta viewport tag in html pages (not in index html)
+*  `html_charset=s`    -- add meta charset tag in html pages
+*  `html_viewport:1`   -- add meta viewport tag in html pages
 *  `html_screen_sw:1`  -- add "fit to screen" switch to html pages
-*  `html_arrows:1`     -- add navigation (including left/right arrows) to html pages
+*  `html_arrows:1`     -- add navigation (ctrl-left/ctrl-right/esc buttons) to html pages
 *  `html_resize:1`     -- resizable images in html pages (default state of "size" button)
 
 ### File and directories
@@ -162,9 +174,9 @@ patters are parsed with perl glob command. It can contain `*`, `?`, `{...}`.
 
 * `\def` `<name>` `<text>` --
 Define a variable. Later in the text following constructions can be used:
-- `${<name>}` expands to `<text>` if variable is defined and to empty string if not.
-- `${<name>:-<word>}` expands to `<text>` if variable is defined and to `<word>` if not.
-- `${<name>:+<word>}` expands to `<word>` if variable is defined and to empty string if not.
+  - `${<name>}` expands to `<text>` if variable is defined and to empty string if not.
+  - `${<name>:-<word>}` expands to `<text>` if variable is defined and to `<word>` if not.
+  - `${<name>:+<word>}` expands to `<word>` if variable is defined and to empty string if not.
 
 * `\inc` `<file name>` --
 Include a file.
@@ -183,14 +195,14 @@ Put text if two words (without spaces) are not equal.
 
 * `ctx` `[<name>]` -- switch context. By using this command
 you can put text into different parts of html. Possible context names:
- - (empty) - default context
- - 'index_head'  - head section of the index file,
- - 'index_begin' - beginning of html body in the index file,
- - 'index_end'   - end of html body in the index file,
- - 'photo_head'  - head section of photo pages
- - 'photo_begin' - beginning of html body in photo pages
- - 'photo_end'   - end of html body in photo pages
- - 'none' - skip the text
+  - (empty) - default context
+  - 'index_head'  - head section of the index file,
+  - 'index_begin' - beginning of html body in the index file,
+  - 'index_end'   - end of html body in the index file,
+  - 'photo_head'  - head section of photo pages
+  - 'photo_begin' - beginning of html body in photo pages
+  - 'photo_end'   - end of html body in photo pages
+  - 'none' - skip the text
 
 Commands `\photo*`, `\h*`, `\toc`, `\inc` are allowed only in the default context.
 

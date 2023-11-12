@@ -11,7 +11,8 @@ use Digest::MD5;
 my %opts = (
   help             => 0,
   verbose          => 0,
-  imgdir           => '.',
+  imgdir           => '',
+  datadir          => '',
   html             => '',
   html_filter      => '',
   html_stdout      => 0,
@@ -56,7 +57,8 @@ Getopt::Long::Configure("no_ignore_case");
 Getopt::Long::GetOptions(
   "h|help"          => \$opts{help},         # print help message
   "v|verbose:1"     => \$opts{verbose},      # be verbose
-  "D|imgdir=s"      => \$opts{imgdir},       # image dir (relative to index file location, default .)
+  "D|imgdir=s"      => \$opts{imgdir},       # image dir, relative to index file location, default input file name without last extension
+  "datadir=s"       => \$opts{datadir},      # data dir (relative to index file location, default: same as imgdir)
   "H|html=s"        => \$opts{html},         # html file (relative to index file location)
   "html_filter=s"   => \$opts{html_filter},  # filter for index html
   "html_stdout:1"   => \$opts{html_stdout},  # print index html to stdout instead of writing to file. html option is still needed.
@@ -104,25 +106,9 @@ pod2usage(-exitval => 0, -verbose => 2) if $opts{help};
 pod2usage(1) if @ARGV!=1;
 
 # index file name
-$opts{infile} = shift;
+my $infile = shift;
 
-# basedir (where infile located)
-$opts{basedir} = $opts{infile};
-$opts{basedir} =~ s/[^\/]*$//;
-$opts{basedir} =~ s|/+$||; # remove trailing /
-$opts{basedir} = '.' if $opts{basedir} eq '';
 
-if (-d $opts{infile}){
-  $opts{imgdir} = $opts{infile};
-  $opts{imgdir} =~ s/.*\///; # remove path
-  $opts{infile} .= '.txt';
-}
-
-# html file name (relative to index file, can be changed later)
-unless ($opts{html}){
-  $opts{html} = $opts{infile};
-  $opts{html} =~ s/\.[^\.]*$/.htm/;
-}
 
 #################################################################
 #### FILE AND PATH FUNCTIONS
@@ -179,6 +165,28 @@ sub rel_dir($$){
   $ret .= "$_/" foreach @d2[$n..$#d2];
   return $ret;
 }
+
+#################################################################
+
+# basename (remove last extension)
+my ($inpath, $inbase, $inext) = path_split($infile);
+
+if (-d $infile){
+  $opts{imgdir} = "$inbase$inext";
+  $infile .= '.txt';
+}
+
+# inpath (where infile located)
+$inpath = './' if $inpath eq '';
+
+# html file name (relative to index file, can be changed later)
+$opts{html} = "$inbase.htm" unless $opts{html};
+$opts{imgdir} = $inbase unless $opts{imgdir};
+$opts{datadir} = $opts{imgdir} unless $opts{datadir};
+
+# add trailing / if needed
+$opts{imgdir} =~ s/([^\/])$/$1\//;
+$opts{datadir} =~ s/([^\/])$/$1\//;
 
 #################################################################
 #### IMAGE SIZE FUNCTIONS
@@ -393,15 +401,15 @@ sub html_crd($$$){
 if ($opts{init} || $opts{init_only}){
 
   print STDERR "[Creating index file...]\n" if $opts{verbose};
-  die "can't find base folder: $opts{basedir}\n"
-    unless -d $opts{basedir};
+  die "can't find base folder: $inpath\n"
+    unless -d $inpath;
 
-  die "can't find image folder: $opts{basedir}/$opts{imgdir}\n"
-    unless -d "$opts{basedir}/$opts{imgdir}";
+  die "can't find image folder: $inpath$opts{imgdir}\n"
+    unless -d "$inpath$opts{imgdir}";
 
   ## get image file list
   my @files = grep {/$opts{init_img_mask}/i}
-    read_dir("$opts{basedir}/$opts{imgdir}", $opts{init_rec});
+    read_dir("$inpath$opts{imgdir}", $opts{init_rec});
 
   ## remove thumbnail, mark, html files from the list
   @files = grep {!/^$opts{th1_pref}.+$opts{init_img_mask}|\/$opts{th1_pref}.+$opts{init_img_mask}/i} @files
@@ -414,7 +422,7 @@ if ($opts{init} || $opts{init_only}){
   ## collect information about files: date, time, thumbnail width
   my %files;
   foreach my $file (@files) {
-    my $path = "$opts{basedir}/$opts{imgdir}/$file";
+    my $path = "$inpath$opts{imgdir}$file";
 
     # get width of small thumbnail (it can be missing!)
     my ($ret, $w, $h) =
@@ -427,13 +435,13 @@ if ($opts{init} || $opts{init_only}){
     my $date = (split(/\s+/, $time))[0] || '';
 
     # relative path
-    my $p = $file; $p=~s|^$opts{basedir}/||; # relative dir
+    my $p = $file; $p=~s|^$inpath||; # relative dir
 
     $files{$file} = {w=>$w, d=>$date, t=>$time, p=>$p};
   }
 
-  rename $opts{infile}, "$opts{infile}.bak" if -f $opts{infile};
-  open OUT, "> $opts{infile}" or die "Can't open $opts{infile}: $!\n";
+  rename $infile, "$infile.bak" if -f $infile;
+  open OUT, "> $infile" or die "Can't open $infile: $!\n";
 
   my $ww=0;  # current width
   my $od=''; # current date
@@ -441,7 +449,6 @@ if ($opts{init} || $opts{init_only}){
   my @list = (sort keys %files);
   @list = sort {$files{$a}->{t} cmp $files{$b}->{t}} @list if $opts{init_tsort};
 
-  print OUT "\\set imgdir $opts{imgdir}\n" if $opts{imgdir} ne '.';
   foreach (@list) {
     my $d = $files{$_}->{d};
     my $w = $files{$_}->{w};
@@ -574,7 +581,7 @@ sub read_file($$$$){
 
     if (/^\\inc\s+(\S+)/){ # include a file
       die "wrong context for include command: $ctx" if $ctx ne '';
-      read_file($1, $data, $defs, $opts);
+      read_file("$inpath$1", $data, $defs, $opts);
       next;
     }
 
@@ -608,12 +615,17 @@ sub read_file($$$$){
 
 my %defs;
 my @data;
-read_file($opts{infile}, \@data, \%defs, \%opts);
+read_file($infile, \@data, \%defs, \%opts);
 
 
-# now all configuration should be read.
-my $imgdir = "$opts{basedir}/$opts{imgdir}/";
-$imgdir =~ s|^(\./)+||;
+# now all configuration should be ready.
+# add trailing / if needed
+$opts{imgdir} =~ s/([^\/])$/$1\//;
+$opts{datadir} =~ s/([^\/])$/$1\//;
+my $imgdir = $opts{imgdir};
+my $datadir = $opts{datadir};
+$imgdir = "$inpath$imgdir" unless $imgdir =~ /^\//;
+$datadir = "$inpath$datadir" unless $datadir =~ /^\//;
 
 #################################################################
 #################################################################
@@ -667,7 +679,7 @@ exit 0 if $opts{dump_opts}
 
 #################################################################
 #################################################################
-# CLEANUP call - remove unused files and exit
+# CLEANUP call - remove unused files in imgdir and exit
 if ($opts{cleanup}){
   my %keep;
   print STDERR "[Cleanup mode...]\n" if $opts{verbose};
@@ -701,9 +713,12 @@ if ($opts{cleanup}){
   }
 
   # add index file if needed
-  $keep{$opts{infile}} = 1 if $opts{imgdir} eq '.';
-  $keep{"$opts{basedir}/$opts{html}"} = 1 if $opts{imgdir} eq '.';
-  $keep{$_} = 1 foreach (glob "${imgdir}addphoto_*");
+  $keep{$infile} = 1 if $opts{imgdir} eq '.';
+  $keep{"$inpath$opts{html}"} = 1;
+
+  if ($imgdir eq $datadir){
+    $keep{$_} = 1 foreach (glob "${imgdir}addphoto_*");
+  }
 
   ### get files to delete
   my @del;
@@ -810,6 +825,7 @@ for (my $i=0; $i<@ph; $i++){
 
   $ph->{imgdir2img} = $d0;
   $ph->{img2imgdir} = rel_dir($d0, '');
+  $ph->{img2datadir} = rel_dir("$opts{imgdir}$d0", $opts{datadir});
 
   # paths from cwd
   $ph->{imgpath} = "$imgdir$d0$ph->{imgname}";
@@ -1017,24 +1033,24 @@ for (my $i=0; $i<@ph; $i++){
       <meta name="viewport" content="width=device-width, initial-scale=1.0">*
         if $opts{html_viewport};
     $head .=qq*
-      <link href="$ph->{img2imgdir}addphoto_photo.css" rel="stylesheet"/>*;
+      <link href="$ph->{img2datadir}addphoto_photo.css" rel="stylesheet"/>*;
     $head .=qq*
-      <link href="$ph->{img2imgdir}addphoto_lang.css" rel="stylesheet"/>*
+      <link href="$ph->{img2datadir}addphoto_lang.css" rel="stylesheet"/>*
         if $opts{lang} eq 'select';
     $head .=qq*
-      <script type="text/JavaScript" src="$ph->{img2imgdir}addphoto_nav.js"></script>*
+      <script type="text/JavaScript" src="$ph->{img2datadir}addphoto_nav.js"></script>*
       if $opts{html_arrows};
     $head .=qq*
-      <script type="text/JavaScript" src="$ph->{img2imgdir}addphoto_lang.js"></script>*
+      <script type="text/JavaScript" src="$ph->{img2datadir}addphoto_lang.js"></script>*
       if $opts{lang} eq 'select';
     $head .=qq*
-      <script type="text/JavaScript" src="$ph->{img2imgdir}addphoto_marks.js"></script>*
+      <script type="text/JavaScript" src="$ph->{img2datadir}addphoto_marks.js"></script>*
       if $ph->{_use_marks};
     $head .=qq*
-      <script type="text/JavaScript" src="$ph->{img2imgdir}addphoto_multi.js"></script>*
+      <script type="text/JavaScript" src="$ph->{img2datadir}addphoto_multi.js"></script>*
       if $ph->{_use_multi};
     $head .=qq*
-      <script type="text/JavaScript" src="$ph->{img2imgdir}addphoto_fit.js"></script>*
+      <script type="text/JavaScript" src="$ph->{img2datadir}addphoto_fit.js"></script>*
       if $opts{html_screen_sw};
 
     # make language switch
@@ -1164,8 +1180,7 @@ for (my $i=0; $i<@ph; $i++){
 
     # write html
     open OUT, "> $ph->{htmpath}" or die "can't open $ph->{htmpath}: $!\n";
-print OUT qq*<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+print OUT qq*<!DOCTYPE html>
 <!--KEY:$key-->
 <head>
 $head$scr$sty
@@ -1188,8 +1203,8 @@ $add{photo_end}
 #################################################################
 ### Write common files: addphoto_*.js, addphoto_*.css
 
-open STY, "> ${imgdir}addphoto_index.css" or die
-  "can't open file: ${imgdir}addphoto_index.css: $!\n";
+open STY, "> ${datadir}addphoto_index.css" or die
+  "can't open file: ${datadir}addphoto_index.css: $!\n";
 print STY qq[
 a {
   text-decoration:none;
@@ -1246,8 +1261,8 @@ body
 close STY;
 
 if (!$opts{nohtm}){
-  open STY, "> ${imgdir}addphoto_photo.css" or die
-    "can't open file: ${imgdir}addphoto_photo.css: $!\n";
+  open STY, "> ${datadir}addphoto_photo.css" or die
+    "can't open file: ${datadir}addphoto_photo.css: $!\n";
   print STY qq[
 a {
   text-decoration:none;
@@ -1293,16 +1308,16 @@ body {
 
 ### languge support
 if ($opts{lang} eq 'select'){
-  open STY, "> ${imgdir}addphoto_lang.css" or die
-    "can't open file: ${imgdir}addphoto_lang.css: $!\n";
+  open STY, "> ${datadir}addphoto_lang.css" or die
+    "can't open file: ${datadir}addphoto_lang.css: $!\n";
   print STY qq*
 .ru_control,.en_control {color:blue;cursor:pointer; }
 .ru {display:inline;} .en {display:none;}
 *;
   close STY;
 
-  open JS, "> ${imgdir}addphoto_lang.js" or die
-    "can't open file: ${imgdir}addphoto_lang.js: $!\n";
+  open JS, "> ${datadir}addphoto_lang.js" or die
+    "can't open file: ${datadir}addphoto_lang.js: $!\n";
 
   print JS qq*
   var langs=['ru', 'en'];
@@ -1361,8 +1376,8 @@ if ($opts{lang} eq 'select'){
 
 ### switching marks
 if (!$opts{nohtml} && $opts{_use_marks}) {
-  open JS, "> ${imgdir}addphoto_marks.js" or die
-    "can't open file: ${imgdir}addphoto_marks.js: $!\n";
+  open JS, "> ${datadir}addphoto_marks.js" or die
+    "can't open file: ${datadir}addphoto_marks.js: $!\n";
   print JS qq*
   // switch image marks
   function switch_mrk(){
@@ -1381,8 +1396,8 @@ if (!$opts{nohtml} && $opts{_use_marks}) {
 
 ### fit-to-screen switch
 if (!$opts{nohtml} && $opts{html_screen_sw}) {
-  open JS, "> ${imgdir}addphoto_fit.js" or die
-    "can't open file: ${imgdir}addphoto_fit.js: $!\n";
+  open JS, "> ${datadir}addphoto_fit.js" or die
+    "can't open file: ${datadir}addphoto_fit.js: $!\n";
   print JS qq*
   // fit-to-screen switch
   function switch_fit(){
@@ -1421,8 +1436,8 @@ if (!$opts{nohtml} && $opts{html_screen_sw}) {
 
 
 if (!$opts{nohtml} && $opts{html_arrows}) {
-  open JS, "> ${imgdir}addphoto_nav.js" or die
-    "can't open file: ${imgdir}addphoto_nav.js: $!\n";
+  open JS, "> ${datadir}addphoto_nav.js" or die
+    "can't open file: ${datadir}addphoto_nav.js: $!\n";
 
   print JS qq*
   // key navigation
@@ -1455,8 +1470,8 @@ if (!$opts{nohtml} && $opts{html_arrows}) {
 }
 
 if (!$opts{nohtml} && $opts{_use_multi}) {
-  open JS, "> ${imgdir}addphoto_multi.js" or die
-    "can't open file: ${imgdir}addphoto_multi.js: $!\n";
+  open JS, "> ${datadir}addphoto_multi.js" or die
+    "can't open file: ${datadir}addphoto_multi.js: $!\n";
 
   print JS qq*
   // switch multiple images
@@ -1483,31 +1498,33 @@ my $in_row=0;
 my $np=0;
 my $nh=0;
 
-my $of = "$opts{basedir}/$opts{html}";
-$of = '/dev/stdout' if $opts{html_stdout};
+my $html=$opts{html};
+$html = "$inpath$html" unless $html=~/^\//;
+$html = '/dev/stdout' if $opts{html_stdout};
 
 if ($opts{html_filter}){
-  open OUT, "|-", "$opts{html_filter} > $of"
-    or die "Can't open $opts{html_filter} > $of: $!\n";
+  open OUT, "|-", "$opts{html_filter} > $html"
+    or die "Can't open $opts{html_filter} > $html: $!\n";
 }
 else {
-  open OUT, ">", "$of"
-    or die "Can't open $of: $!\n";
+  open OUT, ">", "$html"
+    or die "Can't open $html: $!\n";
 }
-print STDERR "[Creating HTML index: $of]\n" if $opts{verbose};
+print STDERR "[Creating HTML index: $html]\n" if $opts{verbose};
 
 ## how to go from html index to image dir:
 my $htmldir = "$opts{html}";
 $htmldir =~ s/[^\/]*$//;
 $htmldir =~ s|/+$||; # remove trailing /
+
 my $htm2imgdir = rel_dir($htmldir, $opts{imgdir});
+my $htm2datadir = rel_dir($htmldir, $opts{datadir});
 
 
 
 # print html header
 if ($opts{html_headers}) {
-  print OUT qq*<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+  print OUT qq*<!DOCTYPE html>
 <html>
 <head>*;
 
@@ -1520,11 +1537,11 @@ if ($opts{html_headers}) {
     if $opts{html_viewport};
 
   print OUT qq*
-  <link href="${imgdir}addphoto_index.css" rel="stylesheet"/>*;
+  <link href="${htm2datadir}addphoto_index.css" rel="stylesheet"/>*;
 
   print OUT qq*
-  <link href="${imgdir}addphoto_lang.css" rel="stylesheet"/>
-  <script type="text/JavaScript" src="${imgdir}addphoto_lang.js"></script>*
+  <link href="${htm2datadir}addphoto_lang.css" rel="stylesheet"/>
+  <script type="text/JavaScript" src="${htm2datadir}addphoto_lang.js"></script>*
     if $opts{lang} eq 'select';
 
   print OUT qq*
