@@ -1091,7 +1091,7 @@ for (my $i=0; $i<@ph; $i++){
     <link rel="previous" href="$purl">* if $purl;
     $head .= qq*
     <link rel="next" href="$nurl">* if $nurl;
-    $nav .= "\n    <br>";
+    $nav .= "\n    <br/>";
 
     # fit-to-screen button
     if ($opts{html_screen_sw}) {
@@ -1128,13 +1128,13 @@ for (my $i=0; $i<@ph; $i++){
     # main image
     my $main=qq*
         <img id=img0 class="addphoto-img" style='width:${w}px;$mw'
-           src='$imgref' alt='$ph->{atitle}'>*;
+           src='$imgref' alt='$ph->{atitle}'/>*;
 
     # marks overlay
     if ($ph->{_use_marks}){
       $main .= qq*
         <img id=marks class="addphoto-img" style='width:${w}px;$mw'
-             src='$ph->{mrkname}'>*;
+             src='$ph->{mrkname}'/>*;
     }
 
     # multiple images:
@@ -1143,7 +1143,7 @@ for (my $i=0; $i<@ph; $i++){
         my ($d, $b, $e) = path_split($files[$i-1]);
         $main .= qq*
           <img id="img$i" class="addphoto-img" style='width:${w}px;visibility:hidden;$mw'
-             src='$b$e'>*;
+             src='$b$e'/>*;
       }
     }
 
@@ -1794,8 +1794,8 @@ foreach my $b (@data){
     print OUT "<div class=addphoto-img-$b->{align}><a$a_attrs>\n";
     print OUT "<img src='$th_file' alt='$b->{atitle}'" .
               " width=$b->{th1_w} height=$b->{th1_h}".
-              " class=addphoto-th></a>\n";
-    print OUT "<br><div class=addphoto-caption style='width:$b->{th1_w}px'>$b->{title}</div>\n";
+              " class=addphoto-th/></a>\n";
+    print OUT "<br/><div class=addphoto-caption style='width:$b->{th1_w}px'>$b->{title}</div>\n";
     print OUT "</div>\n";
   }
   else{
@@ -1805,7 +1805,7 @@ foreach my $b (@data){
       $nh++;
       my ($depth, $title, $ruler) = ($b->{depth}, $b->{title}, $b->{ruler});
       print OUT ($ruler?'<hr>':'') .
-        "<a name='h" . $nh . "'></a><h$depth>$title</h$depth>\n";
+        "<a name='h$nh'></a><h$depth>$title</h$depth>\n";
       next;
     }
     if ($b->{type} eq 'toc'){
