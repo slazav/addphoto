@@ -12,6 +12,7 @@ my %opts = (
   verbose          => 0,
   imgdir           => '',
   datadir          => '',
+  cfg              => '',
   html             => '',
   html_filter      => '',
   html_stdout      => 0,
@@ -58,6 +59,7 @@ Getopt::Long::GetOptions(
   "h|help"          => \$opts{help},         # print help message
   "v|verbose:1"     => \$opts{verbose},      # be verbose
   "D|imgdir=s"      => \$opts{imgdir},       # image dir, relative to index file location, default input file name without last extension
+  "c|cfg=s"         => \$opts{cfg},          # config file, .addphoto.cfg or addphoto/addphoto.cfg if empty
   "datadir=s"       => \$opts{datadir},      # data dir (relative to index file location, default: same as imgdir)
   "H|html=s"        => \$opts{html},         # html file (relative to index file location)
   "html_filter=s"   => \$opts{html_filter},  # filter for index html
@@ -394,6 +396,46 @@ sub html_crd($$$){
   my $url = crd_url($lat, $lon, $name);
   if ($url) {return sprintf('<a href="%s">%.7f %.7f</a><br/>',$url, $lat, $lon);}
   return sprintf('%.7f %.7f', $lat, $lon);
+}
+
+#################################################################
+#################################################################
+# Read configuration files
+if (!$opts{cfg}){
+  foreach ('.addphoto.cfg', 'addphoto/addphoto.cfg') {
+    if (-f $_){
+      $opts{cfg} = $_;
+      last;
+    }
+  }
+}
+if ($opts{cfg}){
+  open CFG, "$opts{cfg}" or die "can't open $opts{cfg}: $!";
+  print STDERR "[Reading configuration from $opts{cfg}]\n" if $opts{verbose};
+  my $buf = '';
+  foreach(<CFG>){
+    # comments
+    s/#.*//;
+
+    #joining lines
+    if (/(.*)\\$/) { $buf .= $1; next; }
+    if ($buf){
+      $_ = $buf . $_;
+      $buf = '';
+    }
+
+    # empty lines
+    next if /^\s*$/;
+
+    warn "Bad configuration line: $_" unless /^\s*([[:word:]]+)(\s+(.*))?/;
+    if (exists $opts{$1}){
+      $opts{$1} = $3 || '';
+    }
+    else {
+      warn "Unknown configuration option: $1";
+    }
+  }
+  close CFG;
 }
 
 #################################################################

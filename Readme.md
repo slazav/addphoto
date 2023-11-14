@@ -51,6 +51,11 @@ Folders and output file
 *  `D|imgdir=s` -- image dir, relative to index file location, default:
 input file name without last extension.
 
+* `c|cfg=s` -- Configuration file name. This is used to read some options
+before reading the input file. If empty, then `.addphoto.cfg` or
+`addphoto/addphoto.cfg` is used. The file should contain lines in the
+form `<option name>[ <option value>]`.
+
 *  `datadir=s` -- data dir (for *.js, *.css files), relative to index
 file location, default: same as imgdir. If you have many texts it could be
 better to use same datadir for all of them.
