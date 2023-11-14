@@ -103,7 +103,7 @@ Getopt::Long::GetOptions(
   "html_resize:1"   => \$opts{html_resize},  # resizable images in html pages (default state of "size" button)
 ) or die "bad option";
 
-my $html_version = '2.3'; # changes when regenerating of html pages is needed
+my $html_version = '2.6'; # changes when regenerating of html pages is needed
 
 #pod2usage(-exitval => 0, -verbose => 2) if $opts{help};
 die "Usage: $0 [options] <input file>" if @ARGV!=1;
@@ -1186,13 +1186,13 @@ for (my $i=0; $i<@ph; $i++){
 
     # main image
     my $main=qq*
-        <img id=img0 class="addphoto-img" style='width:${w}px;$mw'
+        <img id=img0 class="addphoto-img0" style='width:${w}px;$mw'
            src='$imgref' alt='$ph->{atitle}'/>*;
 
     # marks overlay
     if ($ph->{_use_marks}){
       $main .= qq*
-        <img id=marks class="addphoto-img" style='width:${w}px;$mw'
+        <img id=marks class="addphoto-imgN" style='width:${w}px;$mw'
              src='$ph->{mrkname}'/>*;
     }
 
@@ -1201,7 +1201,7 @@ for (my $i=0; $i<@ph; $i++){
       for(my $i=1; $i<=$#files+1; $i++){
         my ($d, $b, $e) = path_split($files[$i-1]);
         $main .= qq*
-          <img id="img$i" class="addphoto-img" style='width:${w}px;visibility:hidden;$mw'
+          <img id="img$i" class="addphoto-imgN" style='width:${w}px;visibility:hidden;$mw'
              src='$b$e'/>*;
       }
     }
@@ -1330,7 +1330,12 @@ body {
   background-color: white;
 }
 
-.addphoto-img {
+.addphoto-img0 {
+  height:auto;
+  position: relative;
+}
+
+.addphoto-imgN {
   height:auto;
   position: absolute; left: 0px; top: 0px;
 }
@@ -1460,7 +1465,7 @@ if (!$opts{nohtml} && $opts{html_screen_sw}) {
   print JS qq*
   // fit-to-screen switch
   function switch_fit(){
-    for (img of document.getElementsByClassName("addphoto-img")){
+    for (img of document.getElementsByClassName("addphoto-img0 addphoto-imgN")){
       img.style.maxWidth = getComputedStyle(img).maxWidth == '100%'? null:'100%';
     }
   }
@@ -1536,7 +1541,7 @@ if (!$opts{nohtml} && $opts{_use_multi}) {
   // switch multiple images
   var nv = 0;
   function switch_multi(){
-    nn=document.getElementsByClassName('addphoto-img').length;
+    nn=document.getElementsByClassName('addphoto-imgN').length + 1;
     nv=(nv+1)\%nn;
     for (var i=1;i<nn;i++){
       document.getElementById("img"+i).style.visibility=
