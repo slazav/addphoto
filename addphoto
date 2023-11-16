@@ -65,8 +65,8 @@ my %opts = (
 Getopt::Long::Configure("no_ignore_case");
 Getopt::Long::GetOptions(
   "h|help"          => \$cmds{help},         # print help message
-  "I|init"          => \$cmds{init},         # INIT MODE: create source file
-  "J|init_only"     => \$cmds{init_only},    # create source file and exit
+  "I|init=s"        => \$cmds{init},         # INIT MODE: create source file. Argument - folder
+  "J|init_only=s"   => \$cmds{init_only},    # create source file and exit. Argument - folder
   "dump_opts"       => \$cmds{dump_opts},    # DUMP options
   "dump_defs"       => \$cmds{dump_defs},    # DUMP definitions
   "dump_inp"        => \$cmds{dump_inp},     # DUMP input files
@@ -119,7 +119,12 @@ Getopt::Long::GetOptions(
 my $html_version = '2.6'; # changes when regenerating of html pages is needed
 
 #pod2usage(-exitval => 0, -verbose => 2) if $cmds{help};
-die "Usage: $0 [options] <input file>" if @ARGV!=1;
+
+# in init mode we can skip source file name, it will be <imgdir>.ph
+push @ARGV, $cmds{init} . ".ph"      if ($cmds{init} && @ARGV==0);
+push @ARGV, $cmds{init_only} . ".ph" if ($cmds{init_only} && @ARGV==0);
+die "Usage: $0 [options] <input file>" unless @ARGV==1;
+$opts{imgdir} = $cmds{init} || $cmds{init_only} || $opts{imgdir};
 
 # source file name
 my $infile = shift;
@@ -186,11 +191,6 @@ sub rel_dir($$){
 
 # basename (remove last extension)
 my ($inpath, $inbase, $inext) = path_split($infile);
-
-if (-d $infile){
-  $opts{imgdir} = "$inbase$inext";
-  $infile .= '.txt';
-}
 
 # inpath (where infile located)
 $inpath = './' if $inpath eq '';
@@ -505,6 +505,10 @@ if ($cmds{init} || $cmds{init_only}){
 
   rename $infile, "$infile.bak" if -f $infile;
   open OUT, "> $infile" or die "Can't open $infile: $!\n";
+
+  print OUT "\\set imgdir $opts{imgdir}\n"
+    if $opts{imgdir} ne "$inbase/";
+
 
   my $ww=0;  # current width
   my $od=''; # current date
