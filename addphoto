@@ -1659,6 +1659,7 @@ my $htm2datadir = rel_dir($htmldir, $opts{datadir});
 # print html header
 if ($opts{html_headers}) {
   print OUT qq*<!DOCTYPE html>
+<!-- Created by addphoto https://github.com/slazav/addphoto -->
 <html>
 <head>*;
 
