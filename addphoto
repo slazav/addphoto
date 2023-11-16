@@ -114,7 +114,7 @@ Getopt::Long::GetOptions(
 
 ) or die "bad option";
 
-my $html_version = '2.6'; # changes when regenerating of html pages is needed
+my $html_version = '3.0'; # changes when regenerating of html pages is needed
 
 #pod2usage(-exitval => 0, -verbose => 2) if $cmds{help};
 
