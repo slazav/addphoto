@@ -420,6 +420,7 @@ if ($opts{cfg}){
     #joining lines
     if (/(.*)\\$/) { $buf .= $1; next; }
     if ($buf){
+      s/^\s+/ /;
       $_ = $buf . $_;
       $buf = '';
     }
@@ -564,6 +565,7 @@ sub read_file($$$$){
     #joining lines
     if (/(.*)\\$/) { $buf .= $1; next; }
     if ($buf){
+      s/^\s+/ /;
       $_ = $buf . $_;
       $buf = '';
     }
