@@ -53,6 +53,9 @@ my %opts = (
   html_screen_sw   => 1,
   html_arrows      => 1,
   html_resize      => 1,
+  index_file       => '',
+  index_only       => 0,
+  index_ref        => '',
 );
 Getopt::Long::Configure("no_ignore_case");
 Getopt::Long::GetOptions(
@@ -101,6 +104,10 @@ Getopt::Long::GetOptions(
   "html_screen_sw:1"=> \$opts{html_screen_sw}, # add "fit to screen" switch to html pages
   "html_arrows:1"   => \$opts{html_arrows},  # add navigation (including left/right arrows) to html pages
   "html_resize:1"   => \$opts{html_resize},  # resizable images in html pages (default state of "size" button)
+  "index_file=s"    => \$opts{index_file},   # index file location (default: do not make index)
+  "index_only:1"    => \$opts{index_only},   # stop after updating index
+  "index_ref=s"     => \$opts{index_ref},    # string to be used in \ref, variables will be expanded using values from index
+
 ) or die "bad option";
 
 my $html_version = '2.6'; # changes when regenerating of html pages is needed
@@ -523,6 +530,34 @@ if ($opts{init} || $opts{init_only}){
 }
 
 
+#################################################################
+#################################################################
+### Read index file if it exists
+my %index;
+if ($opts{index_file} && open(IN, $opts{index_file})){
+
+  my $curr;
+  foreach(<IN>){
+    next if (/^\s*$/);
+
+    if (/^\* (.*)/){
+      $curr = $index{$1} = {};
+      next;
+    }
+
+    if (/^\s*([[:word:]]+):\s+(.*)/){
+      if ($curr) {
+        $curr->{$1} = $2;
+      }
+      else {
+        warn "broken index file, file name is missing before the line: $_\n";
+      }
+      next;
+    }
+    warn "skipping bad line in index: $_\n";
+  }
+  close IN;
+}
 
 
 #################################################################
@@ -602,6 +637,12 @@ sub read_file($$$$){
       next;
     }
 
+    if (/^\\ref\s+(.*)/){  # ref command
+      die "wrong context for toc command: $ctx" if $ctx ne '';
+      push @{$data}, {type=>'ref', name=>$1};
+      next;
+    }
+
     if (/^\\keep\s+(.*)/){  # keep command
       push @{$data}, {type=>'keep', globs=>[split('\s+', $1)]};
       next;
@@ -676,7 +717,9 @@ my %defs = ('INNAME' => "$inbase$inext", 'INBASE' => $inbase);
 my @data;
 read_file($infile, \@data, \%defs, \%opts);
 
-
+#################################################################
+#################################################################
+### recalculate paths (options could be changed in the source file)
 # now all configuration should be ready.
 # add trailing / if needed
 $opts{imgdir} =~ s/([^\/])$/$1\//;
@@ -685,6 +728,25 @@ my $imgdir = $opts{imgdir};
 my $datadir = $opts{datadir};
 $imgdir = "$inpath$imgdir" unless $imgdir =~ /^\//;
 $datadir = "$inpath$datadir" unless $datadir =~ /^\//;
+
+#################################################################
+#################################################################
+### Update and write index file
+if ($opts{index_file}){
+  $index{$opts{html}} = \%defs;
+
+  open(OUT, ">", $opts{index_file}) or
+    die "can't write index file: $opts{index_file}: $!\n";
+
+  foreach my $f (sort keys %index){
+    print OUT "* $f\n";
+    foreach my $k (sort keys %{$index{$f}}){
+      print OUT "  $k: $index{$f}->{$k}\n";
+    }
+  }
+  close OUT;
+}
+exit 0 if $opts{index_only};
 
 #################################################################
 #################################################################
@@ -1565,7 +1627,7 @@ if (!$opts{nohtml} && $opts{_use_multi}) {
 
 #################################################################
 #################################################################
-### create index html
+### create main html
 my $in_row=0;
 my $np=0;
 my $nh=0;
@@ -1582,7 +1644,7 @@ else {
   open OUT, ">", "$html"
     or die "Can't open $html: $!\n";
 }
-print STDERR "[Creating HTML index: $html]\n" if $opts{verbose};
+print STDERR "[Creating HTML page: $html]\n" if $opts{verbose};
 
 ## how to go from html index to image dir:
 my $htmldir = "$opts{html}";
@@ -1886,6 +1948,18 @@ foreach my $b (@data){
     }
     if ($b->{type} eq 'text' && $b->{ctx} eq ''){
       print OUT $b->{text};
+      next;
+    }
+    if ($b->{type} eq 'ref'){
+      if (not $opts{index_file}) {
+        warn "skipping \\ref command: no index file\n";
+        next;
+      }
+      if (not exists $index{$b->{name}}){
+        warn "skipping \\ref command: unknown index key: $b->{name}\n";
+        next;
+      }
+      print OUT expand($index{$b->{name}}, $opts{index_ref}), "\n";
       next;
     }
   }
