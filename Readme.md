@@ -16,41 +16,25 @@ Options can be set in the command line, in configuration file
 
 *  `h|help`            -- print help message
 *  `v|verbose:1`       -- be verbose
-
-Init mode.
-
-*  `I|init` --
-  INIT MODE. In this mode a new source file is created with all images
-  located in the image folder. Then the normal mode is started.
-*  `J|init_only` --
-  INIT MODE. Same as --init, but exit after creating the source file.
+*  `I|init=s`          -- INIT MODE. Create a new source file. Argument is a folder with photos.
+*  `J|init_only`       -- Same, but stop after creating the source file, do not make html.
 *  `T|init_tsort:1`    -- init mode: sort photos by time
 *  `d|init_days:1`     -- init mode: add day headers
 *  `r|init_rec:1`      -- init mode: find files recursively
 *  `w|init_width=i`    -- init mode: max page width
 *  `init_img_mask=s`   -- init mode: regular expression for finding filenames with images.
                           Default: `(.jpe?g$)|(.png$)|(.tiff?$)|(.gif)$`
-
-Dump mode. Read a file and print different information. This could be
-useful for collecting meta information from texts (if it is defined with
-`\def` command), or for debugging.
-
-*  `dump_opts:1`       -- DUMP options and exit
-*  `dump_defs:1`       -- DUMP definitions and exit
-*  `dump_inp:1`        -- DUMP input files and exit
-*  `expand=s`          -- expand a string using variables defined in the file
-
-Cleanup mode:
-
+*  `O|opts:1`          -- Read file, print options and exit
+*  `D|defs:1`          -- Read file, dum definitions and exit
+*  `E|expand=s`        -- expand a string using variables defined in the file and exit
 *  `C|cleanup`         -- CLEANUP MODE: remove unused files and exit
 *  `f|force:1`         -- cleanup mode: do not ask before deleting files
 *  `dryrun:1`          -- cleanup mode: do not delete files
 
-Folders and output file
+Folders and files
 
-*  `D|imgdir=s` -- image dir, relative to source file location, default:
-input file name without last extension.
-
+*  `imgdir=s`        -- image dir, relative to source file location, default:
+            input file name without last extension.
 * `c|cfg=s` -- Configuration file name. This is used to read some options
 before reading the input file. If empty, then `addphoto.cfg` or
 `addphoto/addphoto.cfg` is used. The file should contain lines in the
@@ -189,12 +173,38 @@ to have switchable images.
 
 * `\ctx [<name>]` -- Switch context.
 
+### Init mode
+
+A usual operation is to create folder with photos, run `addphoto -I <folder>`
+to create a source file, and then edit it.
+
+Related options:
+
+Init mode.
+
+*  `I|init=s` -- Create a new source file, and make html page from it.
+*  `J|init_only=s` -- Same, but exit after creating the source file.
+*  `T|init_tsort:1`    -- init mode: sort photos by time
+*  `d|init_days:1`     -- init mode: add day headers
+*  `r|init_rec:1`      -- init mode: find files recursively
+*  `w|init_width=i`    -- init mode: max page width
+*  `init_img_mask=s`   -- init mode: regular expression for finding filenames with images.
+                          Default: `(.jpe?g$)|(.png$)|(.tiff?$)|(.gif)$`
+
+Argument of `--init` and `--init_only` is a folder with photos (imgdir).
+In init mode giving name of source file is optional, its default value
+is `<imgdir>.ph`.
+
 ### Cleanup mode
 
 If `C|cleanup` option is given, the cleanup mode is activated:
 After reading the source file addphoto calculates which files should exist
 in the image folder and deletes all other files. By default, a list of files
-is printed and confirmation is needed to delete them. 
+is printed and confirmation is needed to delete them.
+
+A usual workflow is to start with all photos, then remove unneeded lines
+in the source file, then run `addphoto -C <file>` to remove photos which
+are not needed.
 
 Related options:
 - `f|force:1` -- do not ask before deleting files

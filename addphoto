@@ -11,9 +11,8 @@ my %cmds = (
   help             => 0,
   init             => 0,
   init_only        => 0,
-  dump_opts        => 0,
-  dump_defs        => 0,
-  dump_inp         => 0,
+  opts             => 0,
+  defs             => 0,
   expand           => '',
   cleanup          => 0,
   index_only       => 0,
@@ -67,16 +66,15 @@ Getopt::Long::GetOptions(
   "h|help"          => \$cmds{help},         # print help message
   "I|init=s"        => \$cmds{init},         # INIT MODE: create source file. Argument - folder
   "J|init_only=s"   => \$cmds{init_only},    # create source file and exit. Argument - folder
-  "dump_opts"       => \$cmds{dump_opts},    # DUMP options
-  "dump_defs"       => \$cmds{dump_defs},    # DUMP definitions
-  "dump_inp"        => \$cmds{dump_inp},     # DUMP input files
-  "expand=s"        => \$cmds{expand},       # Expand variables in a string
+  "O|opts"          => \$cmds{opts},         # read file, print options and exit
+  "D|defs"          => \$cmds{defs},         # read file, print definitions and exit
+  "E|expand=s"      => \$cmds{expand},       # Expand variables in a string
   "C|cleanup"       => \$cmds{cleanup},      # CLEANUP MODE: remove unused files and exit
   "index_only:1"    => \$cmds{index_only},   # stop after updating index
 
   "v|verbose:1"     => \$opts{verbose},      # be verbose
-  "D|imgdir=s"      => \$opts{imgdir},       # image dir, relative to source file location, default input file name without last extension
   "c|cfg=s"         => \$opts{cfg},          # config file, .addphoto.cfg or addphoto/addphoto.cfg if empty
+  "imgdir=s"        => \$opts{imgdir},       # image dir, relative to source file location, default input file name without last extension
   "datadir=s"       => \$opts{datadir},      # data dir (relative to source file location, default: same as imgdir)
   "H|html=s"        => \$opts{html},         # html file (relative to source file location)
   "html_filter=s"   => \$opts{html_filter},  # filter for source html
@@ -769,7 +767,7 @@ if ($cmds{expand}){
 #################################################################
 #################################################################
 # DUMP call - dump options, defs, parsed file and exit
-if ($cmds{dump_opts}){
+if ($cmds{opts}){
   foreach my $k (sort keys %opts){
     my $v = defined $opts{$k}? $opts{$k}: "undef";
     print "$k: $v\n";
@@ -777,7 +775,7 @@ if ($cmds{dump_opts}){
   exit 0;
 }
 
-if ($cmds{dump_defs}){
+if ($cmds{defs}){
   foreach my $k (sort keys %defs){
     my $v = defined $defs{$k}? $defs{$k}: "undef";
     print "$k: $v\n";
@@ -785,36 +783,8 @@ if ($cmds{dump_defs}){
   exit 0;
 }
 
-if ($cmds{dump_inp}){
-  foreach my $b (@data){
-    print "\\$b->{type}\n";
-    if ($b->{type} eq 'photo') {
-      print "  file: $_\n" foreach @{$b->{files}};
-      print "  title: $b->{title}\n";
-      print "  align: $b->{align}\n";
-      next;
-    }
-    if ($b->{type} eq 'head') {
-      print "  title: $b->{title}\n";
-      print "  depth: $b->{depth})\n";
-      next;
-    }
-    if ($b->{type} eq 'keep') {
-      print "  globs: $_\n" foreach @{$b->{globs}};
-      next;
-    }
-    if ($b->{type} eq 'text') {
-      print "  ctx:    ", $b->{ctx}, "\n" if $b->{ctx} ne '';
-      print "  length: ", length($b->{text}), "\n";
-      next;
-    }
-  }
-  exit 0;
-}
-
-exit 0 if $cmds{dump_opts}
-       or $cmds{dump_defs}
-       or $cmds{dump_inp};
+exit 0 if $cmds{opts}
+       or $cmds{defs};
 
 #################################################################
 #################################################################
