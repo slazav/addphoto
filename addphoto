@@ -1682,7 +1682,15 @@ if ($opts{html_headers}) {
   print OUT qq*
 $add{head}
 </head>
-<body>
+<body>*;
+
+  print OUT qq*
+<div align=right>
+  <span class="ru_control" id=lang_ru onclick="lang_set('ru')">ru</span>
+  <span class="en_control" id=lang_en onclick="lang_set('en')">en</span>
+</div>* if $opts{lang} eq 'select';
+
+  print OUT qq*
 $add{begin}*;
 }
 
