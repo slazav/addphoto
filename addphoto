@@ -402,7 +402,7 @@ sub html_crd($$$){
 #################################################################
 # Read configuration files
 if (!$opts{cfg}){
-  foreach ('.addphoto.cfg', 'addphoto/addphoto.cfg') {
+  foreach ('addphoto.cfg', 'addphoto/addphoto.cfg') {
     if (-f $_){
       $opts{cfg} = $_;
       last;
