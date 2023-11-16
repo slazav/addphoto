@@ -2,17 +2,17 @@
 
 ### Usage
 
-`addphoto [options] [input file]`
+`addphoto [options] [source file]`
 
-Program reads input file and creates html.
+Program reads a source file and creates html.
 
 link: https://github.com/slazav/addphoto
-
 author: Vladislav Zavjalov (vl.zavjalov at gmail.com), 2004?-2023
 
 ### Options
 
-Options can be used in command line or set in the input file by `\set` command.
+Options can be set in the command line, in configuration file
+(see `--cfg` option) or in the input file (`\set` command).
 
 *  `h|help`            -- print help message
 *  `v|verbose:1`       -- be verbose
@@ -20,10 +20,10 @@ Options can be used in command line or set in the input file by `\set` command.
 Init mode.
 
 *  `I|init` --
-  INIT MODE. In this mode a new index file is created with all images
+  INIT MODE. In this mode a new source file is created with all images
   located in the image folder. Then the normal mode is started.
 *  `J|init_only` --
-  INIT MODE. Same as --init, but exit after creating the index file.
+  INIT MODE. Same as --init, but exit after creating the source file.
 *  `T|init_tsort:1`    -- init mode: sort photos by time
 *  `d|init_days:1`     -- init mode: add day headers
 *  `r|init_rec:1`      -- init mode: find files recursively
@@ -48,26 +48,28 @@ Cleanup mode:
 
 Folders and output file
 
-*  `D|imgdir=s` -- image dir, relative to index file location, default:
+*  `D|imgdir=s` -- image dir, relative to source file location, default:
 input file name without last extension.
 
 * `c|cfg=s` -- Configuration file name. This is used to read some options
-before reading the input file. If empty, then `.addphoto.cfg` or
+before reading the input file. If empty, then `addphoto.cfg` or
 `addphoto/addphoto.cfg` is used. The file should contain lines in the
-form `<option name>[ <option value>]`.
+form `[/<reg.ex.>/ ]<option name>[ <option value>]`. Ir regular
+expression exists then the option is used only if sorce file name is matching.
 
-*  `datadir=s` -- data dir (for *.js, *.css files), relative to index
+*  `datadir=s` -- data dir (for *.js, *.css files), relative to source
 file location, default: same as imgdir. If you have many texts it could be
 better to use same datadir for all of them.
 
-*  `H|html=s`  -- Name of html file, relative to index file location,
+*  `H|html=s`  -- Name of html file, relative to source file location,
 can contain folders. Default: input file name with last extension
 replaces with `.htm`.
 
-*  `html_filter=s` -- Filter for index html, for example `m4 defs.m4 -`
+*  `html_filter=s` -- Filter for the main html file, for example `m4 defs.m4 -`
 
-*  `html_stdout:1` -- Print index html to stdout instead of writing to
-file. html option is still needed.
+*  `html_stdout:1` -- Print the main html page to stdout instead of writing to
+file. Name of the final file sould be anyway set with --html option, it
+will be used for references in photo pages.
 
 Other options
 
@@ -88,40 +90,44 @@ Other options
 *  `map_zoom=i`        -- Map link zoom (default 6)
 *  `fig_lang=s`        -- fig language
 *  `fig_res=f`         -- fig resolution
-*  `html_headers:1`    -- generate html headers in the index file (default: 1)
+*  `html_headers:1`    -- generate html headers in the main page (default: 1)
 *  `html_charset=s`    -- add meta charset tag in html pages
 *  `html_viewport:1`   -- add meta viewport tag in html pages
 *  `html_screen_sw:1`  -- add "fit to screen" switch to html pages
 *  `html_arrows:1`     -- add navigation (ctrl-left/ctrl-right/esc buttons) to html pages
 *  `html_resize:1`     -- resizable images in html pages (default state of "size" button)
 
+*  `index_file=s` -- index file location (default: do not make index)
+*  `index_only:1` -- stop after updating index
+*  `index_ref=s`  -- string to be used in \ref, variables will be expanded using values from index
+
 ### File and directories
 
-* Index file. It contains the album structure: list of images,
-text, configuration. Name of index file is taken from an argument
-of the program. In init mode (-I,--init option) index file is created
-(old one is moved to *.bak if it exists). In other modes the index file
+* Source file. It contains the album structure: list of images,
+text, configuration. Name of the source file is taken from an argument
+of the program. In init mode (-I,--init option) source file is created
+(old one is moved to *.bak if it exists). In other modes the source file
 should exist.
 
 * Image folder. Folder for all album images and other files. It is
 specified in --imgdir option as a relative path from location of the
-index file. Default value is '.'. Paths of all album images are counted
+source file. Default value is '.'. Paths of all album images are counted
 from this folder.
 
-If a folder name is given to a program instead of index file the Image
+If a folder name is given to a program instead of source file the Image
 folder is set to this name and Index file name is foremed by adding .txt
 to this name.
 
 * HTML-file. File for html code of the album. File is always overwritten
-by the program. Specified by I<--html option as a relative path counted
-from location of the index file. Default name is created from the index
+by the program. Specified by --html option as a relative path counted
+from location of the source file. Default name is created from the source
 file name by removing last extension (if it exists) and adding '.htm'
 instead.
 
 * Image files. In init mode (-I,--init option) program finds and
-write into the index file all image files located in the image folder
+write into the source file all image files located in the image folder
 (default) and in all subfolders (with -r, --recursive option). In the
-index file one can use any path to the image, relative to the image
+source file one can use any path to the image, relative to the image
 folder.
 
 * Thumbnails. There are two sizes of thumbnail images. Names for
@@ -136,14 +142,14 @@ file. Names for a mark image is made from the image name by adding a
 prefix which can be set by options --mark_pref. If the prefix ends with
 '/' then marks are locates in a subfolder.
 
-### Input file syntax:
+### Source file syntax
 
 Commands are started at the beginning of line with '\' symbol. Symbol '\' in
 the beginning can be protected by putting another '\' in front of it.
 Line can be joined with the next one by putting '\' at the end.
 Other lines copied without changes. Commands:
 
-* `\photo` `<file(s)>` `<title>` --
+* `\photo <file(s)> <title>` --
 Insert an image. A thumbnail with caption is inserted in the text, with
 a link to a separate html file with the full-size image. If a few
 `\photo` lines are located together then thumbnails are aligned
@@ -153,67 +159,188 @@ spaces. Relative paths are allowed if files are located in subfolders,
 except paths with `..` components. A few filenames can be separated with commas,
 to have switchable images.
 
-* `\photo[r|l]` `<file(s)>` `<title>` -- Same, but thumbnail
-will be align to the right or left.
+* `\photo[r|l] <file(s)> <title>` -- Same, but thumbnail will be align to the right or left.
 
-* `\h(1|2|3|4)` `<title>` --
-Add header which will be used for making table of contents.
+* `\h(1|2|3|4) <title>` -- Add header which will be used for making table of contents.
 
-* `\h(1|2|3|4)r` `<title>` --
-Add header with a ruler. This is equivalent to the previous command preceeded by `<hr>`.
+* `\h(1|2|3|4)r <title>` -- Add header with a ruler. This is equivalent to the previous command preceeded by `<hr>`.
 
-* `\toc` --
-Create table of contents using headers defined by `\h*` commands.
+* `\toc` -- Create table of contents using headers defined by `\h*` commands.
 
-* `\end` --
-Do not read rest of the file.
+* `\end` -- Do not read rest of the file.
 
-* `\#` --
-Ignore the line.
+* `\#` -- Ignore the line.
 
-* `\set` `<name>` `<value>` --
-Set an option.
+* `\set` `<name>` `<value>` -- Set an option.
 
-* `\keep` `<file pattern>` `...` --
-Keep additional files in the cleanup mode.
-patters are parsed with perl glob command. It can contain `*`, `?`, `{...}`.
+* `\keep <file pattern> ...` -- Keep additional files in the cleanup mode.
 
-* `\def` `<name>` `<text>` --
-Define a variable. Later in the text following constructions can be used:
-  - `${<name>}` expands to `<text>` if variable is defined and to empty string if not.
-  - `${<name>:-<word>}` expands to `<text>` if variable is defined and to `<word>` if not.
-  - `${<name>:+<word>}` expands to `<word>` if variable is defined and to empty string if not.
-Pre-defined variables:
-  - `${INNAME}` -- name (without path) of the input file
-  - `${INBASE}` -- base name (without path and extension) of the input file
+* `\def <name> <text>` -- Define a variable.
 
-* `\inc` `<file name>` --
-Include a file.
+* `\inc <file_name>` -- Include a file.
 
-* `\ifdef` `<var_name>` `<text>` --
-Put text if the variable is defined.
+* `\ifdef <var_name> <text>` -- Print the text if the variable is defined.
 
-* `\ifndef` `<var_name>` `<text>` ---
-Put text if the variable is not defined.
+* `\ifndef <var_name> <text>` --- Print the text if the variable is not defined.
 
-* `\ifeq` `<word1>` `<word2>` `<text>` --
-Put text if two words (without spaces) are equal.
+* `\ifeq <word1> <word2> <text>` -- Print the text if two words (without spaces) are equal.
 
-* `\ifneq` `<word1>` `<word2>` `<text>` --
-Put text if two words (without spaces) are not equal.
+* `\ifneq <word1> <word2> <text>` -- Print the text if two words (without spaces) are not equal.
 
-* `ctx` `[<name>]` -- switch context. By using this command
-you can put text into different parts of html. Possible context names:
+* `\ctx [<name>]` -- Switch context.
+
+### Cleanup mode
+
+If `C|cleanup` option is given, the cleanup mode is activated:
+After reading the source file addphoto calculates which files should exist
+in the image folder and deletes all other files. By default, a list of files
+is printed and confirmation is needed to delete them. 
+
+Related options:
+- `f|force:1` -- do not ask before deleting files
+*  `dryrun:1` -- do not delete files
+
+Files can be protected with `\keep <pattern> ...` command.
+Patters are parsed with perl glob command. It can contain `*`, `?`, `{...}`.
+
+
+### Headers and table of content
+
+Headers are inserted with `\h(1|2|3|4) <title>` and `\h(1|2|3|4)r <title>` commands.
+The second version (header with a ruler) is equivalent to the first one preceeded by `<hr>`.
+
+Table of content is generated with `\toc` command.
+
+If you want to exclude a header from the table of content, use plain html, e.g `<h3>...</h3>`
+
+Example:
+```
+<h3>Table of Content</h3>
+\toc
+\h3r Header1
+...
+\h3r Header2
+\h4 Header2.1
+\h4 Header2.2
+...
+```
+
+### Language support
+
+Addphoto supports two languages, Russian and English. This includes
+translation of the interface and some tools for switching languages. In
+html switching is done by having `<span class=ru>...</span>` and `<span
+class=en>...</span>` blocks and a javascript code (located in
+`addphoto_lang.js`) for switching their visibility. "ru/en" switch is
+located at the top of each page, key 't' can be also used for switching.
+
+The option `lang` can have one of three values:
+
+- `ru`: Interface is in Russian, no tools for translation are available.
+- `en`: Same for English.
+- `select`: Switching RU/EN languages, file `addphoto_lang.js` is included.
+
+You can use `RU{TEXT}` and `EN{TEXT}` macros to insert blocks of texts.
+
+### Including files
+
+It is possible to include files with `\inc <file_name>` command. Usually
+it is useful to keep html headers and some definitions in a separate
+file.
+
+For example, one can have multiple texts starting with
+```
+\def title ...
+\def author ...
+\inc addphoto/headers.ph
+...
+```
+
+And common file `addphoto/headers.ph` with
+```
+\ctx index_head
+<title>${title}${author:+, }${author}</title>
+\ifdef auth <meta name="Author" content="${author}">
+...
+
+\ctx index_begin
+<div align=right>
+  <u><span class="ru_control" id=lang_ru onclick="lang_set('ru')">ru</span></u>
+  <u><span class="en_control" id=lang_en onclick="lang_set('en')">en</span></u>
+</div>
+<h2 align=center>${title}</h2>
+\ifdef auth <h3 align=right>${auth}</h3>
+```
+
+
+### Contexts
+
+Sometimes it is needed to add text to a certain part of html page.
+This is done with context mechanism.
+
+Context is switched with `\ctx [<name>]` command.
+
+Possible context names:
   - (empty) - default context
-  - `index_head`  - head section of the index file,
-  - `index_begin` - beginning of html body in the index file,
-  - `index_end`   - end of html body in the index file,
-  - `photo_head`  - head section of photo pages
+  - `index_head`  - head section of the main html file,
+  - `index_begin` - beginning of html body in the main file,
+  - `index_end`   - end of html body in the main file,
+  - `photo_head`  - head section of photo html pages
   - `photo_begin` - beginning of html body in photo pages
   - `photo_end`   - end of html body in photo pages
   - `none` - skip the text
 
-Commands `\photo*`, `\h*`, `\toc`, `\inc` are allowed only in the default context.
+Commands `\photo*`, `\h*`, `\toc`, `\inc` `\ref` are allowed only in the default context.
+
+
+### Definitions and text expansions
+
+Variables can be defined with `\def <name> <value>` command.
+
+After the definition following expansions are done:
+- `${<name>}` expands to `<text>` if variable is defined and to empty string if not.
+- `${<name>:-<word>}` expands to `<text>` if variable is defined and to `<word>` if not.
+- `${<name>:+<word>}` expands to `<word>` if variable is defined and to empty string if not.
+
+Pre-defined variables:
+- `${INNAME}` -- name (without path) of the source file
+- `${INBASE}` -- base name (without path and extension) of the source file
+
+There are a few additional expansions:
+- `WWW{TEXT}` is expanded to `<a href="TEXT">TEXT</a>`
+- `RU{TEXT}` is expanded to `<span class=ru>TEXT</span>`
+- `EN{TEXT}` is expanded to `<span class=en>TEXT</span>`
+
+Variable names are used in `\ifdef <var_name> <text>` and `\ifndef
+<var_name> <text>` commands.
+
+Variables are used in indices (see below).
+
+
+### Index
+
+Index mechanism can be used to quickly obtain information about multiple
+texts and to make links between them. There are three options which
+control it:
+
+* `index_file`. If it is empty (default) index is not used. Otherwise each
+time addphoto process a text, it adds all variables defined in this text
+to the index file.
+
+* `index_only`. If set, then addphoto only updates index, without generating html pages.
+
+* `index_ref`. It is a string which will be expanded in the `\ref` command.
+
+If index is used, then `\ref <html_name>` command will be replaced with
+`index_ref` string, expanded using definitions from the text
+correspoinding to the html file.
+
+Example. We have a few texts where we use some definitions, something
+like `\def title ...`. We set `index_file index.txt`. When addphoto
+processes each text, all definitions are added to the index file. We
+also set `index_ref <li><a href="${INBASE}">${title}</a>` (it's
+better to do in config file to prevent expansion of variables) and then
+use `\ref <html_name>` if we want to put a link link to other text.
 
 
 ### PhotoSwipe support
