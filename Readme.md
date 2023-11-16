@@ -258,12 +258,12 @@ For example, one can have multiple texts starting with
 
 And common file `addphoto/headers.ph` with
 ```
-\ctx index_head
+\ctx head
 <title>${title}${author:+, }${author}</title>
 \ifdef auth <meta name="Author" content="${author}">
 ...
 
-\ctx index_begin
+\ctx begin
 <div align=right>
   <u><span class="ru_control" id=lang_ru onclick="lang_set('ru')">ru</span></u>
   <u><span class="en_control" id=lang_en onclick="lang_set('en')">en</span></u>
@@ -282,9 +282,9 @@ Context is switched with `\ctx [<name>]` command.
 
 Possible context names:
   - (empty) - default context
-  - `index_head`  - head section of the main html file,
-  - `index_begin` - beginning of html body in the main file,
-  - `index_end`   - end of html body in the main file,
+  - `head`  - head section of the main html file,
+  - `begin` - beginning of html body in the main file,
+  - `end`   - end of html body in the main file,
   - `photo_head`  - head section of photo html pages
   - `photo_begin` - beginning of html body in photo pages
   - `photo_end`   - end of html body in photo pages

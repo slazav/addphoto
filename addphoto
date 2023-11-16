@@ -689,7 +689,7 @@ sub read_file($$$$){
       $ctx = defined($2)? $2:'';
       die "unknown context: $ctx"
         unless grep(/^$ctx$/,
-          ('', 'index_head', 'index_begin', 'index_end',
+          ('', 'head', 'begin', 'end',
                'photo_head', 'photo_begin', 'photo_end', 'none'));
       next;
     }
@@ -898,7 +898,7 @@ if ($opts{cleanup}){
 #################################################################
 # make add structure
 my %add = (
-  'index_head' => '', 'index_begin' => '', 'index_end' => '',
+  'head' => '', 'begin' => '', 'end' => '',
   'photo_head' => '', 'photo_begin' => '', 'photo_end' => '',
 );
 foreach my $b (@data){
@@ -1680,10 +1680,10 @@ if ($opts{html_headers}) {
     if $opts{lang} eq 'select';
 
   print OUT qq*
-$add{index_head}
+$add{head}
 </head>
 <body>
-$add{index_begin}*;
+$add{begin}*;
 }
 
 sub write_pswp_data($){
@@ -1969,7 +1969,7 @@ print OUT "</div>\n" if $in_row; # close row
 
 # print html tail
 print OUT qq*
-$add{index_end}
+$add{end}
 </body>
 </html>
 * if $opts{html_headers};
