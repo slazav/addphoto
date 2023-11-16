@@ -58,14 +58,14 @@ Getopt::Long::Configure("no_ignore_case");
 Getopt::Long::GetOptions(
   "h|help"          => \$opts{help},         # print help message
   "v|verbose:1"     => \$opts{verbose},      # be verbose
-  "D|imgdir=s"      => \$opts{imgdir},       # image dir, relative to index file location, default input file name without last extension
+  "D|imgdir=s"      => \$opts{imgdir},       # image dir, relative to source file location, default input file name without last extension
   "c|cfg=s"         => \$opts{cfg},          # config file, .addphoto.cfg or addphoto/addphoto.cfg if empty
-  "datadir=s"       => \$opts{datadir},      # data dir (relative to index file location, default: same as imgdir)
-  "H|html=s"        => \$opts{html},         # html file (relative to index file location)
-  "html_filter=s"   => \$opts{html_filter},  # filter for index html
-  "html_stdout:1"   => \$opts{html_stdout},  # print index html to stdout instead of writing to file. html option is still needed.
-  "I|init"          => \$opts{init},         # INIT MODE: create index file
-  "J|init_only"     => \$opts{init_only},    # create index file and exit
+  "datadir=s"       => \$opts{datadir},      # data dir (relative to source file location, default: same as imgdir)
+  "H|html=s"        => \$opts{html},         # html file (relative to source file location)
+  "html_filter=s"   => \$opts{html_filter},  # filter for source html
+  "html_stdout:1"   => \$opts{html_stdout},  # print source html to stdout instead of writing to file. html option is still needed.
+  "I|init"          => \$opts{init},         # INIT MODE: create source file
+  "J|init_only"     => \$opts{init_only},    # create source file and exit
   "T|init_tsort:1"  => \$opts{init_tsort},   # init mode: sort photos by time
   "d|init_days:1"   => \$opts{init_days},    # init mode: add day headers
   "r|init_rec:1"    => \$opts{init_rec},     # init mode: find files recursively
@@ -95,9 +95,9 @@ Getopt::Long::GetOptions(
   "map_zoom=i"      => \$opts{map_zoom},     # Map link zoom (default 6)
   "fig_lang=s"      => \$opts{fig_lang},     # fig language
   "fig_res=f"       => \$opts{fig_res},      # fig resolution
-  "html_headers:1"  => \$opts{html_headers}, # generate html headers in the index file
-  "html_charset=s"  => \$opts{html_charset}, # add meta charset tag in html pages (not in index html)
-  "html_viewport:1" => \$opts{html_viewport},# add meta viewport tag in html pages (not in index html)
+  "html_headers:1"  => \$opts{html_headers}, # generate html headers in the source file
+  "html_charset=s"  => \$opts{html_charset}, # add meta charset tag in html pages (not in source html)
+  "html_viewport:1" => \$opts{html_viewport},# add meta viewport tag in html pages (not in source html)
   "html_screen_sw:1"=> \$opts{html_screen_sw}, # add "fit to screen" switch to html pages
   "html_arrows:1"   => \$opts{html_arrows},  # add navigation (including left/right arrows) to html pages
   "html_resize:1"   => \$opts{html_resize},  # resizable images in html pages (default state of "size" button)
@@ -108,7 +108,7 @@ my $html_version = '2.6'; # changes when regenerating of html pages is needed
 #pod2usage(-exitval => 0, -verbose => 2) if $opts{help};
 die "Usage: $0 [options] <input file>" if @ARGV!=1;
 
-# index file name
+# source file name
 my $infile = shift;
 
 
@@ -182,7 +182,7 @@ if (-d $infile){
 # inpath (where infile located)
 $inpath = './' if $inpath eq '';
 
-# html file name (relative to index file, can be changed later)
+# html file name (relative to source file, can be changed later)
 $opts{html} = "$inbase.htm" unless $opts{html};
 $opts{imgdir} = $inbase unless $opts{imgdir};
 $opts{datadir} = $opts{imgdir} unless $opts{datadir};
@@ -427,23 +427,29 @@ if ($opts{cfg}){
     # empty lines
     next if /^\s*$/;
 
-    warn "Bad configuration line: $_" unless /^\s*([[:word:]]+)(\s+(.*))?/;
-    if (exists $opts{$1}){
-      $opts{$1} = $3 || '';
+    if (/^\s*(\/(.*)\/\s*)?([[:word:]]+)(\s+(.*))?/){
+      my ($re, $k, $v) = ($2, $3, $5);
+      next if defined($re) && $infile!~/$re/;
+      if (exists $opts{$k}){
+        $opts{$k} = $v || '';
+      }
+      else {
+        warn "Unknown configuration option: $1";
+      }
+      next;
     }
-    else {
-      warn "Unknown configuration option: $1";
-    }
+
+    warn "Bad configuration line: $_\n";
   }
   close CFG;
 }
 
 #################################################################
 #################################################################
-# INIT call - do index file, then continue as usual
+# INIT call - do source file, then continue as usual
 if ($opts{init} || $opts{init_only}){
 
-  print STDERR "[Creating index file...]\n" if $opts{verbose};
+  print STDERR "[Creating source file...]\n" if $opts{verbose};
   die "can't find base folder: $inpath\n"
     unless -d $inpath;
 
@@ -520,7 +526,7 @@ if ($opts{init} || $opts{init_only}){
 
 #################################################################
 #################################################################
-### Read index file, extract photo and header lists, set options.
+### Read file, extract photo and header lists, set options.
 
 sub read_file($$$$);
 
@@ -771,7 +777,7 @@ if ($opts{cleanup}){
     }
   }
 
-  # add index file if needed
+  # add source file if needed
   $keep{$infile} = 1 if $opts{imgdir} eq '.';
   $keep{"$inpath$opts{html}"} = 1;
 
