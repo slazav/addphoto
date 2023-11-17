@@ -58,7 +58,7 @@ my %opts = (
   html_screen_sw   => 1,
   html_arrows      => 1,
   html_resize      => 1,
-  index_file       => '',
+  index            => 0,
   index_ref        => '',
 );
 Getopt::Long::Configure("no_ignore_case");
@@ -109,7 +109,7 @@ Getopt::Long::GetOptions(
   "html_screen_sw:1"=> \$opts{html_screen_sw}, # add "fit to screen" switch to html pages
   "html_arrows:1"   => \$opts{html_arrows},  # add navigation (including left/right arrows) to html pages
   "html_resize:1"   => \$opts{html_resize},  # resizable images in html pages (default state of "size" button)
-  "index_file=s"    => \$opts{index_file},   # index file location (default: do not make index)
+  "index:1"         => \$opts{index},        # use index file (default: do not use index)
   "index_ref=s"     => \$opts{index_ref},    # string to be used in \ref, variables will be expanded using values from index
 
 ) or die "bad option";
@@ -187,16 +187,14 @@ sub rel_dir($$){
 
 #################################################################
 
-# basename (remove last extension)
+# split source file name
 my ($inpath, $inbase, $inext) = path_split($infile);
-
-# inpath (where infile located)
 $inpath = './' if $inpath eq '';
 
 # html file name (relative to source file, can be changed later)
 $opts{html} = "$inbase.htm" unless $opts{html};
-$opts{imgdir} = $inbase unless $opts{imgdir};
-$opts{datadir} = $opts{imgdir} unless $opts{datadir};
+$opts{imgdir}  = $inbase unless $opts{imgdir};
+$opts{datadir} = $inbase unless $opts{datadir};
 
 # add trailing / if needed
 $opts{imgdir} =~ s/([^\/])$/$1\//;
@@ -411,7 +409,7 @@ sub html_crd($$$){
 
 #################################################################
 #################################################################
-# Read configuration files
+### Read configuration files
 if (!$opts{cfg}){
   foreach ('addphoto.cfg', 'addphoto/addphoto.cfg') {
     if (-f $_){
@@ -446,7 +444,7 @@ if ($opts{cfg}){
         $opts{$k} = $v || '';
       }
       else {
-        warn "Unknown configuration option: $1";
+        warn "Unknown configuration option: \"$k\"";
       }
       next;
     }
@@ -538,34 +536,6 @@ if ($cmds{init} || $cmds{init_only}){
 }
 
 
-#################################################################
-#################################################################
-### Read index file if it exists
-my %index;
-if ($opts{index_file} && open(IN, $opts{index_file})){
-
-  my $curr;
-  foreach(<IN>){
-    next if (/^\s*$/);
-
-    if (/^\* (.*)/){
-      $curr = $index{$1} = {};
-      next;
-    }
-
-    if (/^\s*([[:word:]]+):\s+(.*)/){
-      if ($curr) {
-        $curr->{$1} = $2;
-      }
-      else {
-        warn "broken index file, file name is missing before the line: $_\n";
-      }
-      next;
-    }
-    warn "skipping bad line in index: $_\n";
-  }
-  close IN;
-}
 
 
 #################################################################
@@ -757,23 +727,71 @@ read_file($infile, \@data, \%defs, \%opts);
 #################################################################
 #################################################################
 ### recalculate paths (options could be changed in the source file)
+
 # now all configuration should be ready.
 # add trailing / if needed
-$opts{imgdir} =~ s/([^\/])$/$1\//;
+$opts{imgdir}  =~ s/([^\/])$/$1\//;
 $opts{datadir} =~ s/([^\/])$/$1\//;
+
+# chech $opts{html} - it should be filename without path!
+die "html filename should not contain /\n" if $opts{html} =~/\//;
+
 my $imgdir = $opts{imgdir};
 my $datadir = $opts{datadir};
-$imgdir = "$inpath$imgdir" unless $imgdir =~ /^\//;
+$imgdir  = "$inpath$imgdir"  unless $imgdir =~ /^\//;
 $datadir = "$inpath$datadir" unless $datadir =~ /^\//;
 
 #################################################################
 #################################################################
-### Update and write index file
-if ($opts{index_file}){
-  $index{$opts{html}} = \%defs;
+### Update index.
+### We should do it after reading the file where some options can be changed
+my %index;
 
-  open(OUT, ">", $opts{index_file}) or
-    die "can't write index file: $opts{index_file}: $!\n";
+# Read index. Argument - path from source file location or "";
+# If file is missing do nothing.
+sub read_index($){
+  my $idx_path=shift;
+  $idx_path  = "$inpath$idx_path"  unless $idx_path =~ /^\//;
+  $idx_path =~ s|^./||g; # strip ./ in the beginning (we use this for keys!)
+  my $idx_file = $idx_path.'addphoto.idx';
+
+
+  if (open(IN, $idx_file)){
+    print STDERR "[Reading index: $idx_file]\n" if $opts{verbose};
+
+    my $curr;
+    foreach(<IN>){
+      next if (/^\s*$/);
+
+      if (/^\* (.*)/){
+        $curr = $index{$idx_path.$1} = {};
+        next;
+      }
+
+      if (/^\s*([[:word:]]+):\s+(.*)/){
+        if ($curr) {
+          $curr->{$1} = $2;
+        }
+        else {
+          warn "broken index file, file name is missing before the line: $_\n";
+        }
+        next;
+      }
+      warn "skipping bad line in index: $_\n";
+    }
+    close IN;
+  }
+}
+
+# Write index. Argument - path from source file location or global path.
+sub write_index($){
+  my $idx_path=shift;
+  $idx_path  = "$inpath$idx_path"  unless $idx_path =~ /^\//;
+  my $idx_file = $idx_path.'addphoto.idx';
+
+  open(OUT, ">", $idx_file) or
+    die "can't write index file: $idx_file: $!\n";
+  print STDERR "[Writing index: $idx_file]\n" if $opts{verbose};
 
   foreach my $f (sort keys %index){
     print OUT "* $f\n";
@@ -783,6 +801,13 @@ if ($opts{index_file}){
   }
   close OUT;
 }
+
+if ($opts{index}){
+  read_index("");
+  $index{$opts{html}} = \%defs;
+  write_index("");
+}
+
 exit 0 if $cmds{index_only};
 
 #################################################################
@@ -812,9 +837,6 @@ if ($cmds{defs}){
   }
   exit 0;
 }
-
-exit 0 if $cmds{opts}
-       or $cmds{defs};
 
 #################################################################
 #################################################################
@@ -1636,9 +1658,7 @@ my $in_row=0;
 my $np=0;
 my $nh=0;
 
-my $html=$opts{html};
-$html = "$inpath$html" unless $html=~/^\//;
-$html = '/dev/stdout' if $opts{html_stdout};
+my $html = $opts{html_stdout} ? '/dev/stdout' : $inpath.$opts{html};
 
 if ($opts{html_filter}){
   open OUT, "|-", "$opts{html_filter} > $html"
@@ -1649,15 +1669,6 @@ else {
     or die "Can't open $html: $!\n";
 }
 print STDERR "[Creating HTML page: $html]\n" if $opts{verbose};
-
-## how to go from html index to image dir:
-my $htmldir = "$opts{html}";
-$htmldir =~ s/[^\/]*$//;
-$htmldir =~ s|/+$||; # remove trailing /
-
-my $htm2imgdir = rel_dir($htmldir, $opts{imgdir});
-my $htm2datadir = rel_dir($htmldir, $opts{datadir});
-
 
 
 # print html header
@@ -1676,11 +1687,11 @@ if ($opts{html_headers}) {
     if $opts{html_viewport};
 
   print OUT qq*
-  <link href="${htm2datadir}addphoto_index.css" rel="stylesheet"/>*;
+  <link href="$opts{datadir}addphoto_index.css" rel="stylesheet"/>*;
 
   print OUT qq*
-  <link href="${htm2datadir}addphoto_lang.css" rel="stylesheet"/>
-  <script type="text/JavaScript" src="${htm2datadir}addphoto_lang.js"></script>*
+  <link href="$opts{datadir}addphoto_lang.css" rel="stylesheet"/>
+  <script type="text/JavaScript" src="$opts{datadir}addphoto_lang.js"></script>*
     if $opts{lang} eq 'select';
 
   print OUT qq*
@@ -1871,7 +1882,7 @@ function addphoto_parse_hash() {
   print $fd "addphoto_images=[\n";
   foreach my $ph (@ph){
     # paths of html page and thumbnail image from album index
-    my $htm2img = $htm2imgdir . $ph->{imgdir2img};
+    my $htm2img = $opts{imgdir} . $ph->{imgdir2img};
     my $imgfile = $htm2img . $ph->{imgname};
     my $th1file = $htm2img . $ph->{th1name};
     my $th2file = $htm2img . $ph->{th2name};
@@ -1906,7 +1917,7 @@ foreach my $b (@data){
     my ($img, $title) = (${$b->{files}}[0], $b->{title});
 
     # paths from html index
-    my $htm2img = $htm2imgdir . $b->{imgdir2img};
+    my $htm2img = $opts{imgdir} . $b->{imgdir2img};
     my $imgfile = $htm2img . $b->{imgname};
     my $htmfile = $htm2img . $b->{htmname};
     my $th1file = $htm2img . $b->{th1name};
@@ -1964,9 +1975,10 @@ foreach my $b (@data){
       next;
     }
     if ($b->{type} eq 'ref'){
-      if (not $opts{index_file}) {
-        warn "skipping \\ref command: no index file\n";
-        next;
+      if (not exists $index{$b->{name}}){
+        # try to find and read index file
+        my ($ref_dir, $ref_base, $ref_ext) = path_split($b->{name});
+        read_index($ref_dir);
       }
       if (not exists $index{$b->{name}}){
         warn "skipping \\ref command: unknown index key: $b->{name}\n";
