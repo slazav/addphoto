@@ -589,7 +589,36 @@ sub expand($$){
   $in=~s/\$\{[[:word:]]+\}//g;
   $in=~s/\$\{[[:word:]]+:\+([^\}]*)\}//g;
   $in=~s/\$\{[[:word:]]+:\-([^\}]*)\}/$1/g;
-  return $in
+  return $in;
+}
+
+sub remove_htm($){
+  my $in = shift;
+  $in=~s/<[^>]*>//g;
+  $in=~s/[<>\']//g; #`
+  return $in;
+}
+sub one_lang($$){
+  my $in = shift;
+  my $keep = shift;
+  foreach my $l ('ru','en'){
+    next if $keep eq $l;
+    $in=~s|<span class=[\"\']?$l[\"\']?>.*?</span>||g;
+  }
+  return $in;
+}
+
+sub expand1($){
+  my $in    = shift;
+  # Order is important: RU/EN sould not be inside
+  # WWW, ONLYRU/ONLYEN should be later, NOHTM should be last.
+  $in=~s|(?<![[:word:]])WWW\{(.*?)\}|<a href=$1>$1</a>|gs;
+  $in=~s|(?<![[:word:]])RU\{(.*?)\}|<span class=ru>$1</span>|gs;
+  $in=~s|(?<![[:word:]])EN\{(.*?)\}|<span class=en>$1</span>|gs;
+  $in=~s|(?<![[:word:]])ONLYRU\{(.*?)\}|@{[one_lang($1,'ru')]}|gs;
+  $in=~s|(?<![[:word:]])ONLYEN\{(.*?)\}|@{[one_lang($1,'en')]}|gs;
+  $in=~s|(?<![[:word:]])NOHTM\{(.*?)\}|@{[remove_htm($1)]}|gs;
+  return $in;
 }
 
 # read input file
@@ -760,7 +789,8 @@ exit 0 if $cmds{index_only};
 #################################################################
 # EXPAND call
 if ($cmds{expand}){
-  print expand(\%defs, $cmds{expand});
+  my $e = expand(\%defs, $cmds{expand});
+  print expand1($e);
   exit 0;
 }
 
@@ -864,11 +894,7 @@ if ($cmds{cleanup}){
   foreach my $b (@data){
     for my $f ('text','title'){
       next unless exists $b->{$f};
-      # Order is important: RU/EN sould not be inside
-      # WWW.
-      $b->{$f}=~s|WWW\{(.*?)\}|<a href=$1>$1</a>|gs;
-      $b->{$f}=~s|RU\{(.*?)\}|<span class=ru>$1</span>|gs;
-      $b->{$f}=~s|EN\{(.*?)\}|<span class=en>$1</span>|gs;
+      $b->{$f} = expand1($b->{$f});
     }
   }
 }
@@ -904,9 +930,7 @@ for (my $i=0; $i<@ph; $i++){
   my $ph = $ph[$i];
 
   # remove html tags from text, for html alt atribute
-  $ph->{atitle} = $ph->{title};
-  $ph->{atitle}=~s/<[^>]*>//g;
-  $ph->{atitle}=~s/[<>\']//g; #`
+  $ph->{atitle} = remove_htm($ph->{title});
 
   my @files = @{$ph->{files}};
   foreach (@files) {die "error: can't find file: $_\n" unless -f "$imgdir$_";}
@@ -1948,7 +1972,8 @@ foreach my $b (@data){
         warn "skipping \\ref command: unknown index key: $b->{name}\n";
         next;
       }
-      print OUT expand($index{$b->{name}}, $opts{index_ref}), "\n";
+      my $e = expand($index{$b->{name}}, $opts{index_ref});
+      print OUT expand1($e), "\n";
       next;
     }
   }

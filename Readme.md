@@ -316,16 +316,27 @@ Pre-defined variables:
 - `${INNAME}` -- name (without path) of the source file
 - `${INBASE}` -- base name (without path and extension) of the source file
 
-There are a few additional expansions:
-- `WWW{TEXT}` is expanded to `<a href="TEXT">TEXT</a>`
-- `RU{TEXT}` is expanded to `<span class=ru>TEXT</span>`
-- `EN{TEXT}` is expanded to `<span class=en>TEXT</span>`
-
 Variable names are used in `\ifdef <var_name> <text>` and `\ifndef
 <var_name> <text>` commands.
 
 Variables are used in indices (see below).
 
+There are a few additional expansions:
+- `WWW{TEXT}` is expanded to `<a href="TEXT">TEXT</a>`
+- `RU{TEXT}` is expanded to `<span class=ru>TEXT</span>`
+- `EN{TEXT}` is expanded to `<span class=en>TEXT</span>`
+- `ONLYRU{TEXT}`, `ONLYEN{TXT}` will remove all `<span class=ru>...</span>` constractions with non-ru/non-en languages.
+- `NOHTML{TEXT}` will remove all html tags as well as angle brackets and single qoutes.
+
+Note that order is important: `WWW` should be inside `RU`/`EN`, inside `ONLYRU`/`ONLYEN`, inside `NOHTML`.
+
+Example:
+```
+\def title RU{...}EN{...}
+\ctx head
+<title>NOHTM{ONLYRU{${title}}</title>
+\ctx
+```
 
 ### Index
 
