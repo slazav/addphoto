@@ -387,3 +387,18 @@ something like this:   `external_8: "fig" "file=%p; addphoto_mkfig $file;
 xfig ${file%.*}.fig &"`
 
 * `ph_resize` -- resize images
+
+### mcedit syntax file
+
+A syntax file for mcedit is available.
+
+Add
+```
+file .\*\\.ph addphoto
+include addphoto.syntax
+```
+to `Syntax` file in `~/.local/share/mc/syntax/` (copy from `/usr/share/mc/syntax/` if missing).
+
+Put `addphoto.syntax` file to the same folder, edit it if needed.
+
+

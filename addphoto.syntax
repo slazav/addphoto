@@ -1,0 +1,45 @@
+context default
+
+keyword whole linestart \\photo    brightred
+keyword whole linestart \\photor   brightred
+keyword whole linestart \\photol   brightred
+keyword whole linestart \\keep     brightred
+keyword whole linestart \\set      brightred
+keyword whole linestart \\add      brightred
+keyword whole linestart \\def      brightred
+keyword whole linestart \\ref      brightred
+keyword whole linestart \\ifdef    brightred
+keyword whole linestart \\ifndef   brightred
+keyword whole linestart \\ifeqdef  brightred
+keyword whole linestart \\ifneqdef brightred
+keyword whole linestart \\toc      brightred
+keyword whole linestart \\inc      brightred
+keyword whole linestart \\h1       brightred
+keyword whole linestart \\h2       brightred
+keyword whole linestart \\h3       brightred
+keyword whole linestart \\h4       brightred
+keyword whole linestart \\h1r      brightred
+keyword whole linestart \\h2r      brightred
+keyword whole linestart \\h3r      brightred
+keyword whole linestart \\h4r      brightred
+keyword linestart \\#        brown
+
+# m4 definitions
+keyword divert brightred
+keyword define brightred
+keyword ifelse brightred
+keyword dnl brightred
+
+context exclusive linestart \\# \n brown
+
+context @{ } yellow
+context ${ } yellow
+context RU{ } cyan
+context EN{ } green
+
+# html
+context <!-- -->  red
+context < >  white
+
+
+
