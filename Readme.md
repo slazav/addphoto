@@ -68,7 +68,6 @@ Other options:
 *  `nohtml:1`          -- Do not generate hmtl pages for images
 *  `mstyle=s`          -- Mark style
 *  `l|lang=s`          -- Language (ru, en, select)
-*  `pswp:1`            -- PhotoSwipe support
 *  `quality=i`         -- Jpeg quality for thumbnails (default 90)
 *  `map_ref=s`         -- Map link style (gmap, nakarte)
 *  `map_zoom=i`        -- Map link zoom (default 6)
@@ -363,11 +362,6 @@ Example:
 \ref dir2/file2.htm     <br>${ref}
 \ref ../dir3/file3.htm  <br>${ref}
 ```
-
-### PhotoSwipe support
-
-There is a possibility to use PhotoSwipe library for making
-photo albums, but these options are not fully tested.
 
 ### Dependencies
 

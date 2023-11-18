@@ -46,7 +46,6 @@ my %opts = (
   nohtml           => 0,
   mstyle           => 'aa_gif',
   lang             => 'select',
-  pswp             => 0,
   quality          => 90,
   map_ref          => 'nakarte',
   map_zoom         => 13,
@@ -96,7 +95,6 @@ Getopt::Long::GetOptions(
   "nohtml:1"        => \$opts{nohtml},       # Do not generate hmtl pages for images
   "mstyle=s"        => \$opts{mstyle},       # Mark style
   "l|lang=s"        => \$opts{lang},         # Language (ru, en, select)
-  "pswp:1"          => \$opts{pswp},         # PhotoSwipe support
   "quality=i"       => \$opts{quality},      # Jpeg quality for thumbnails (default 90)
   "map_ref=s"       => \$opts{map_ref},      # Map link style (gmap, nakarte)
   "map_zoom=i"      => \$opts{map_zoom},     # Map link zoom (default 6)
@@ -1709,208 +1707,6 @@ $add{head}
 $add{begin}*;
 }
 
-sub write_pswp_data($){
-  my $fd = shift;
-print $fd qq*
-<!-- PhotoSwipe data, added because of --pswp option was used -->
-<div id=gallery class=pswp tabindex=-1 role=dialog area-hidden=true>
-  <div class="pswp__bg"></div>
-  <div class="pswp__scroll-wrap">
-    <div class="pswp__container">
-      <div class="pswp__item"></div>
-      <div class="pswp__item"></div>
-      <div class="pswp__item"></div>
-    </div>
-    <div class="pswp__ui pswp__ui--hidden">
-      <div class="pswp__top-bar">
-        <div class="pswp__counter"></div>
-        <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
-        <a href="" download class="ref_download">
-        <button class="pswp__button btn_download" title="Download"></button></a>
-        <button class="pswp__button btn_time"     title="Time"></button>
-        <button class="pswp__button btn_map"      title="Map"></button>
-        <button class="pswp__button btn_marks"    title="Marks on/off"></button>
-        <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
-        <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
-        <div class="pswp__preloader">
-          <div class="pswp__preloader__icn">
-            <div class="pswp__preloader__cut">
-              <div class="pswp__preloader__donut"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <!--div class="pswp__loading-indicator"><div class="pswp__loading-indicator__line"></div></div-->
-      <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
-        <div class="pswp__share-tooltip">
-          <!-- <a href="#" class="pswp__share--facebook"></a>
-               <a href="#" class="pswp__share--twitter"></a>
-               <a href="#" class="pswp__share--pinterest"></a>
-               <a href="#" download class="pswp__share--download"></a> -->
-        </div>
-      </div>
-      <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)"></button>
-      <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)"></button>
-      <div class="pswp__caption" align=left>
-        <div class="pswp__caption__center" width=100% align=left></div>
-      </div>
-    </div>
-  </div>
-</div>
-*;
-print $fd qq*
-<script>
-var pswp;
-function addphoto_open_pswp(i, el){
-
-  // getBoundingClientRect works properly with IMG, not A.
-  // switch to inner img
-  for (let i = 0; el && i < el.children.length; i++) {
-    if (el.children[i].tagName === 'IMG') { el = el.children[i]; break; }
-  }
-
-  // Define PhotoSwipe options
-  // See: http://photoswipe.com/documentation/options.html
-  var options = {
-    index: i-1,
-    getThumbBoundsFn: function(index) {
-        // See Options->getThumbBoundsFn section of docs for more info
-        if (!el) return;
-        var rect = el.getBoundingClientRect();
-        var pageYScroll = window.pageYOffset || document.documentElement.scrollTop;
-        return {x:rect.left, y:rect.top + pageYScroll, w:rect.width};
-    },
-    addCaptionHTMLFn: function(item, captionEl, isFake) {
-      captionEl.children[0].innerHTML = item.title;
-      return true;
-    },
-  };
-  if(!el) {
-    options.showAnimationDuration = 0;
-  }
-
-  // Pass data to PhotoSwipe and initialize it
-  var pswpElement = document.querySelectorAll('.pswp')[0];
-  pswp = new PhotoSwipe(
-    pswpElement, PhotoSwipeUI_Default, addphoto_images, options);
-
-  // see: http://photoswipe.com/documentation/responsive-images.html
-  var realViewportW, realViewportH,
-      useLargeImages = false, firstResize = true, imageSrcWillChange;
-
-  pswp.listen('beforeResize', function() {
-    realViewportW = Math.min(document.documentElement.clientWidth, window.innerWidth || 1600);
-  });
-
-  pswp.listen('gettingData', function(index, item) {
-    if (item.th2 != undefined && realViewportW < item.th2.w) {
-      item.src = item.th2.src;
-      item.w = item.th2.w;
-      item.h = item.th2.h;
-      return;
-    }
-    if (item.th1 != undefined && realViewportW < item.th1.w) {
-      item.src = item.th1.src;
-      item.w = item.th1.w;
-      item.h = item.th1.h;
-      return;
-    }
-    if (item.th1.src) {
-      item.msrc = item.th1.src;
-    }
-    item.src = item.th0.src;
-    item.w = item.th0.w;
-    item.h = item.th0.h;
-  });
-
-  pswp.listen('afterChange', function(index) {
-    var it = pswp.currItem;
-    bp = document.getElementsByClassName("ref_download");
-    if (bp.length){ bp[0].setAttribute('href', it.th0.src); }
-    bp = document.getElementsByClassName("btn_time");
-    if (bp.length){
-      if (it.dat) {bp[0].setAttribute('title', it.dat);}
-      else {bp[0].style.display = 'none';}
-    }
-    bp = document.getElementsByClassName("btn_map");
-    if (bp.length){
-      if (it.lat && it.lon){
-        bp[0].style.display = '';
-        bp[0].setAttribute('title', it.lat + "," + it.lon + ", " + it.alt || '');
-        if (it.map){
-          bp[0].setAttribute('onclick', "window.open('" + it.map + "');");
-        }
-      }
-      else {bp[0].style.display = 'none';}
-    }
-    bp = document.getElementsByClassName("btn_marks");
-    if (bp.length){
-      if (pswp.currItem.ovl) {
-        bp[0].style.display = '';
-        bp[0].setAttribute('onclick', 'addphoto_switch_marks()');
-      }
-      else {bp[0].style.display = 'none';}
-    }
-  });
-  pswp.init();
-}
-
-function addphoto_switch_marks() {
-  el = pswp.currItem.ovlEl;
-  if (!el) {return;}
-  el.style.display = el.style.display == 'none'? '':'none';
-}
-
-// Parse URL hash and open pswp if it contains #pid
-function addphoto_parse_hash() {
-  var hash = window.location.hash.substring(1);
-  var params = {};
-  if(hash.length < 3) {return params;} // a=b
-  var vars = hash.split('&');
-  for (var i = 0; i < vars.length; i++) {
-    if(!vars[i]) { continue; }
-    var pair = vars[i].split('=');
-    if(pair.length < 2) { continue; }
-    params[pair[0]] = pair[1];
-  }
-  if(params.pid) {
-    addphoto_open_pswp(params.pid);
-  }
-};
-*;
-
-  print $fd "addphoto_images=[\n";
-  foreach my $ph (@ph){
-    # paths of html page and thumbnail image from album index
-    my $htm2img = $opts{imgdir} . $ph->{imgdir2img};
-    my $imgfile = $htm2img . $ph->{imgname};
-    my $th1file = $htm2img . $ph->{th1name};
-    my $th2file = $htm2img . $ph->{th2name};
-    my $mrkfile = $htm2img . $ph->{mrkname};
-    print  $fd "  {";
-    print  $fd  "\n    th0: {src: \"$imgfile\", w:$ph->{img_w}, h:$ph->{img_h}}";
-    print  $fd ",\n    th1: {src: \"$th1file\", w:$ph->{th1_w}, h:$ph->{th1_h}}" if $ph->{use_th1};
-    print  $fd ",\n    th2: {src: \"$th2file\", w:$ph->{th2_w}, h:$ph->{th2_h}}" if $ph->{use_th2};
-    print  $fd ",\n    ovl: \"$mrkfile\"" if $ph->{_use_marks};
-    print  $fd ",\n    title: \"$ph->{title}\"" if $ph->{title};
-    print  $fd ",\n    dat: \"$ph->{time}\"" if $ph->{time};
-    printf $fd ",\n    alt: %.1f", $ph->{alt} if $ph->{alt};
-    printf $fd ",\n    lat: %.6f", $ph->{lat} if $ph->{lat};
-    printf $fd ",\n    lon: %.6f", $ph->{lon} if $ph->{lon};
-    printf $fd ",\n    map: \"%s\"", crd_url($ph->{lat}, $ph->{lon}, $ph->{imgname}) if $ph->{lat} ||$ph->{lon};
-    print  $fd "\n  },\n";
-  }
-  print $fd "];\n";
-
-print $fd qq*
-addphoto_parse_hash();
-</script>
-<!-- end of PhotoSwipe data -->
-*;
-}
-
-write_pswp_data(*OUT) if $opts{pswp};
-
 foreach my $b (@data){
   if ($b->{type} eq 'photo') {
     $np++;
@@ -1942,13 +1738,8 @@ foreach my $b (@data){
       $in_row=0;
     }
     my $a_attrs=" name='ph$np'";
-    if (!$opts{pswp}){
-      if ($opts{nohtml}) { $a_attrs .= " href='$imgfile'"; }
-      else              { $a_attrs .= " href='$htmfile'"; }
-    }
-    else {
-      $a_attrs .= " onclick='addphoto_open_pswp($np, this)'";
-    }
+    if ($opts{nohtml}) { $a_attrs .= " href='$imgfile'"; }
+    else               { $a_attrs .= " href='$htmfile'"; }
     print OUT "<div class=addphoto-img-$b->{align}><a$a_attrs>\n";
     print OUT "<img src='$th_file' alt='$b->{atitle}'" .
               " width=$b->{th1_w} height=$b->{th1_h}".
