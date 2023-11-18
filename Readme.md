@@ -83,7 +83,6 @@ Other options:
 
 *  `index:1`      -- Use index (default: 0)
 *  `index_only:1` -- stop after updating index (default: 0)
-*  `index_ref=s`  -- string to be used in \ref, variables will be expanded using values from index
 
 ### File and directories
 
@@ -167,7 +166,7 @@ to have switchable images.
 
 * `\ctx [<name>]` -- Switch context (see Contexts section below).
 
-* `\ref [<name>]` -- reference to another file (see Index section below).
+* `\ref <name> <text>` -- reference to another file (see Index section below).
 
 ### Init mode
 
@@ -337,30 +336,33 @@ Example:
 
 ### Index
 
-Index mechanism can be used to collect information about multiple html pages
-and to make links between them. There are three options which control it:
+Index mechanism can be used to collect information about multiple html
+pages and to make links between them.
 
-* `index:1`. If it is set, then index is updated: each
-time addphoto creates an html page, it adds all variables defined in the source file
-to the index file `addphoto.idx` which is located in the same folder 
-with html.
+If option `index:1` is set, then index is updated: each time
+addphoto creates an html page, it adds all variables defined in the
+source file to the index file `addphoto.idx` which is located in the
+same folder  with html.
 
-* `index_only:1`. If set, then addphoto only updates index, without generating html pages.
+If option `index_only:1` is set, addphoto only updates index, without
+generating html pages.
 
-* `index_ref=s`. It is a string which will be expanded in the `\ref` command.
+The `\ref <html_name> <text>` command will be replaced with `<text>`
+expanded using definitions from external html file. `<html_name>` can
+contain folders, in this case index file from this folder will be
+loaded.   Symbol `@` is used instead of `$` for variable expansions,
+`@{HTML}` will be replaced with `<html_name>`.
 
-The `\ref <html_name>` command will be replaced with
-`index_ref` string, expanded using definitions from the text
-correspoinding to the html file. `<html_name>` can contain
-folders, in this case index file from this folder will be loaded.
-
-Example. We have a few texts where we use some definitions, something
-like `\def title ...`. We set `index 1`. When addphoto
-processes each text, all definitions are added to the index file. We
-also set `index_ref <li><a href="${INBASE}.htm">${title}</a>` (it's
-better to do in config file to prevent expansion of variables) and then
-use `\ref <html_name>` if we want to put a link link to other text.
-
+Example:
+```
+\def title ...
+\def date ...
+...
+\def ref <a href="@{HTML}">@{title}@{date:+, }@{date}</a>
+\ref file1.htm          <br>${ref}
+\ref dir2/file2.htm     <br>${ref}
+\ref ../dir3/file3.htm  <br>${ref}
+```
 
 ### PhotoSwipe support
 

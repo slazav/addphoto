@@ -59,7 +59,6 @@ my %opts = (
   html_arrows      => 1,
   html_resize      => 1,
   index            => 0,
-  index_ref        => '',
 );
 Getopt::Long::Configure("no_ignore_case");
 Getopt::Long::GetOptions(
@@ -110,8 +109,6 @@ Getopt::Long::GetOptions(
   "html_arrows:1"   => \$opts{html_arrows},  # add navigation (including left/right arrows) to html pages
   "html_resize:1"   => \$opts{html_resize},  # resizable images in html pages (default state of "size" button)
   "index:1"         => \$opts{index},        # use index file (default: do not use index)
-  "index_ref=s"     => \$opts{index_ref},    # string to be used in \ref, variables will be expanded using values from index
-
 ) or die "bad option";
 
 my $html_version = '3.0'; # changes when regenerating of html pages is needed
@@ -545,20 +542,21 @@ if ($cmds{init} || $cmds{init_only}){
 sub read_file($$$$);
 
 
-sub expand($$){
+sub expand($$;$){
   my $defs  = shift;
   my $in    = shift;
+  my $ch    = shift || '\$';
   # expanding variables
   foreach my $k (keys %{$defs}){
-    $in=~s/\$\{$k\}/$defs->{$k}/g;
-    $in=~s/\$\{$k:\+([^\}]*)\}/$1/g;
-    $in=~s/\$\{$k:\-([^\}]*)\}/$defs->{$k}/g;
+    $in=~s/$ch\{$k\}/$defs->{$k}/g;
+    $in=~s/$ch\{$k:\+([^\}]*)\}/$1/g;
+    $in=~s/$ch\{$k:\-([^\}]*)\}/$defs->{$k}/g;
 
   }
   # unset variables
-  $in=~s/\$\{[[:word:]]+\}//g;
-  $in=~s/\$\{[[:word:]]+:\+([^\}]*)\}//g;
-  $in=~s/\$\{[[:word:]]+:\-([^\}]*)\}/$1/g;
+  $in=~s/$ch\{[[:word:]]+\}//g;
+  $in=~s/$ch\{[[:word:]]+:\+([^\}]*)\}//g;
+  $in=~s/$ch\{[[:word:]]+:\-([^\}]*)\}/$1/g;
   return $in;
 }
 
@@ -644,9 +642,9 @@ sub read_file($$$$){
       next;
     }
 
-    if (/^\\ref\s+(.*)/){  # ref command
+    if (/^\\ref\s+(\S+)\s+(.*)/){  # ref command
       die "wrong context for toc command: $ctx" if $ctx ne '';
-      push @{$data}, {type=>'ref', name=>$1};
+      push @{$data}, {type=>'ref', name=>$1, text=>$2};
       next;
     }
 
@@ -764,7 +762,8 @@ sub read_index($){
       next if (/^\s*$/);
 
       if (/^\* (.*)/){
-        $curr = $index{$idx_path.$1} = {};
+        my $k = $idx_path.$1;
+        $curr = $index{$k} = {HTML=>$k};
         next;
       }
 
@@ -796,6 +795,7 @@ sub write_index($){
   foreach my $f (sort keys %index){
     print OUT "* $f\n";
     foreach my $k (sort keys %{$index{$f}}){
+      next if $k eq 'HTML';
       print OUT "  $k: $index{$f}->{$k}\n";
     }
   }
@@ -1984,7 +1984,7 @@ foreach my $b (@data){
         warn "skipping \\ref command: unknown index key: $b->{name}\n";
         next;
       }
-      my $e = expand($index{$b->{name}}, $opts{index_ref});
+      my $e = expand($index{$b->{name}}, $b->{text}, '@');
       print OUT expand1($e), "\n";
       next;
     }
