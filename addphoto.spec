@@ -1,5 +1,5 @@
 Name: addphoto
-Version: 2.3
+Version: 3.0
 Release: alt1
 Group: Graphics
 License: GPL3
@@ -25,6 +25,29 @@ Scripts for making html photo albums
 %_bindir/*
 
 %changelog
+* Sat Nov 18 2023 Vladislav Zavjalov <slazav@altlinux.org> 3.0-alt1
+v3.0. Many changes, some are incompatable with previous versions
+New features:
+- Addphoto generates reasonable html header of the main html file.
+- Contexts (\ctx command): adding text to different places (html headers, photo pages).
+- Variables (\def command), ${name}, ${name:-...}, ${name:+...} expansions.
+- RU{}, EN{}, WWW{}, NOHTM{}, ONLYRU{}, ONLYEN{} expansions.
+- Index: collecting information from multiple files, references to other files, \ref command.
+- Printing definitions and options, --defs, --opts --expand mode.
+- Configuration files (addphoto.cfg or addphoto/addphoto.cfg)
+- Add --datadir option (place for css and js files), it can be shared between multiple texts.
+- rearrange js/css files, one file per feature.
+- Syntax file for mcedit.
+- Remove PhotoSwipe support (new version requires different code).
+- Some options are removed, renames, changed.
+- Html is always located near source file.
+- Remove multiple spaces when joining lines.
+- fix error with thumbnail dot updating an multi-images.
+- use different colors for thumbnail dots (red for marks, magenta for multi-images).
+- fix for new ImageMagick (problem with making marks).
+- fix error in --html_filter option.
+- fix error in --nohtml mode.
+
 * Wed Oct 18 2023 Vladislav Zavjalov <slazav@altlinux.org> 2.3-alt1
 - This is a stable version currently used in slazav.xyz site.
   I have added a few new features recently, keeping it
