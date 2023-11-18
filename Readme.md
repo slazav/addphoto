@@ -1,15 +1,24 @@
 ## addphoto -- Script for generating html with photos (for slazav.xyz site)
 
+link: https://github.com/slazav/addphoto
+
+author: Vladislav Zavjalov (vl.zavjalov at gmail.com), 2004?-2023
+
 ### Usage
 
 `addphoto [options] [source file]`
 
 Program reads a source file and creates html.
 
-link: https://github.com/slazav/addphoto
-author: Vladislav Zavjalov (vl.zavjalov at gmail.com), 2004?-2023
 
-### Options
+### How to start
+
+* Make a folder (`mytext`) and put some photos there.
+* Run `addphoto -I mytext` to create template of a source file `mytxt.ph`
+* Edit source file and run `addphoto mytxt.ph`
+
+
+### List of all options
 
 Options can be set in the command line, in configuration file
 (see `--cfg` option) or in the input file (`\set` command).
@@ -31,8 +40,6 @@ Options can be set in the command line, in configuration file
 *  `f|force:1`         -- cleanup mode: do not ask before deleting files
 *  `dryrun:1`          -- cleanup mode: do not delete files
 
-Folders and files
-
 *  `imgdir=s` -- Image dir, relative to source file location, default:
 source file name without last extension.
 
@@ -44,7 +51,7 @@ better to use same datadir for all of them.
 before reading the source file. If empty, then `addphoto.cfg` or
 `addphoto/addphoto.cfg` is used. The file should contain lines in the
 form `[/<reg.ex.>/ ]<option name>[ <option value>]`. If regular
-expression exists then the option is used only if sorce file name is matching.
+expression exists then the option is used only if source file name is matching.
 
 *  `H|html=s`  -- Name of html file, without any subdirectories.
 Default: source file name with last extension replaced with `.htm`.
@@ -54,8 +61,6 @@ Default: source file name with last extension replaced with `.htm`.
 *  `html_stdout:1` -- Print the main html page to stdout instead of writing to
 file. Name of the final file should be set anyway with html option, it
 will be used for references in photo pages.
-
-Other options:
 
 *  `th1_pref=s`        -- Small thumbnail prefix (can end with /), empty for no thumbnails
 *  `th1_size=s`        -- Small thumbnail size (S1:S2:S3, see ph_resize)
@@ -91,14 +96,20 @@ of the program. In init mode (-I,--init option) source file is created
 (old one is moved to *.bak if it exists). In other modes the source file
 should exist.
 
-* Image folder. Folder for all album images and other files. It is
-specified in --imgdir option as a relative path from location of the
-source file. Default value is the source file name without extension.
-
 * HTML-file. File for the main html page, always located in the same
 folder with source file. Specified by --html option. Default name is
 created from the source file name by removing last extension (if it
 exists) and adding '.htm' instead.
+
+* Image folder. Folder for all album images and other files. It is
+specified by --imgdir option as a relative path from location of the
+source file. Default value is the source file name without extension.
+
+* Data folder. Folder for js and css files. It is specified by --datadir
+option as a relative path from location of the source file. Default
+value is the source file name without extension. It could be reasonable
+to share data folder between multiple texts, for example use `addphoto`
+folder.
 
 * Image files. In init mode (-I,--init option) program finds and
 write into the source file all image files located in the image folder
@@ -110,13 +121,14 @@ folder.
 thumbnail images are made from image names by adding a prefix which can
 be set by options --th1_pref (for small thumbnails), --th2_pref (for
 large thumbnails). If the prefix ends with '/' then thumbnails are
-locates in a subfolder. Sizes of thumbnails are set by --th1_size and
---th2_size options (in W1:W2:W3 format, see elsewhere).
+located in a subfolder. Sizes of thumbnails are set by --th1_size and
+--th2_size options (in W1:W2:W3 format, see ph_resize script).
 
 * Marks. Marks are made from a fig file located near the image
 file. Names for a mark image is made from the image name by adding a
 prefix which can be set by options --mark_pref. If the prefix ends with
 '/' then marks are locates in a subfolder.
+
 
 ### Source file syntax
 
@@ -165,7 +177,8 @@ to have switchable images.
 
 * `\ctx [<name>]` -- Switch context (see Contexts section below).
 
-* `\ref <name> <text>` -- reference to another file (see Index section below).
+* `\ref <html_name> <text>` -- reference to another file (see Index section below).
+
 
 ### Init mode
 
@@ -174,8 +187,6 @@ running `addphoto -I <folder>` to create a source file, and then editing
 it.
 
 Related options:
-
-Init mode.
 
 *  `I|init=s` -- Create a new source file, and make html page from it.
 *  `J|init_only=s` -- Same, but exit after creating the source file.
@@ -199,7 +210,7 @@ is printed and confirmation is needed to delete them.
 
 A usual workflow is to start with all photos, then remove unneeded lines
 in the source file, then run `addphoto -C <file>` to remove photos which
-are not needed.
+are not used.
 
 Related options:
 - `f|force:1` -- do not ask before deleting files
@@ -286,14 +297,10 @@ And common file `addphoto/headers.ph` with
 ```
 \ctx head
 <title>NOHTML{${title}${author:+, }${author}}</title>
-\ifdef auth <meta name="Author" content="${author}">
+\ifdef auth <meta name="Author" content="NOHTML{${author}}">
 ...
 
 \ctx begin
-<div align=right>
-  <u><span class="ru_control" id=lang_ru onclick="lang_set('ru')">ru</span></u>
-  <u><span class="en_control" id=lang_en onclick="lang_set('en')">en</span></u>
-</div>
 <h2 align=center>${title}</h2>
 \ifdef auth <h3 align=right>${auth}</h3>
 ```
@@ -314,7 +321,7 @@ Pre-defined variables:
 Variable names are used in `\ifdef <var_name> <text>` and `\ifndef
 <var_name> <text>` commands.
 
-Variables are used in indices (see below).
+Variables are used in indices (see Index section below).
 
 There are a few additional expansions:
 - `WWW{TEXT}` is expanded to `<a href="TEXT">TEXT</a>`
@@ -338,10 +345,10 @@ Example:
 Index mechanism can be used to collect information about multiple html
 pages and to make links between them.
 
-If option `index:1` is set, then index is updated: each time
+If option `index:1` is set, then the index is updated: each time
 addphoto creates an html page, it adds all variables defined in the
 source file to the index file `addphoto.idx` which is located in the
-same folder  with html.
+same folder with html.
 
 If option `index_only:1` is set, addphoto only updates index, without
 generating html pages.
