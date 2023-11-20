@@ -48,7 +48,10 @@ Other options can be set from command line, in configuration file
 *  `T|init_tsort:1`    -- init mode: sort photos by time
 *  `d|init_days:1`     -- init mode: add day headers
 *  `r|init_rec:1`      -- init mode: find files recursively
-*  `w|init_width=i`    -- init mode: max page width
+*  `w|page_width=i`    -- Width of the main page. In the init mode images are arranged to
+                          fit this width; max-width property of body of the main html page is
+                          set to this value + 50px. If zet to 0, then page can be expanded to
+                          any width. Default: 800.
 *  `init_img_mask=s`   -- init mode: regular expression for finding filenames with images.
                           Default: `(.jpe?g$)|(.png$)|(.tiff?$)|(.gif)$`
 *  `f|force:1`         -- cleanup mode: do not ask before deleting files
@@ -67,7 +70,7 @@ before reading the source file. If empty, then `addphoto.cfg` or
 form `[/<reg.ex.>/ ]<option name>[ <option value>]`. If regular
 expression exists then the option is used only if source file name is matching.
 
-*  `ph_resize` -- path to `ph_resize` program. Default: `ph_resize`.
+*  `ph_resize=s` -- path to `ph_resize` program. Default: `ph_resize`.
 
 *  `H|html=s`  -- Name of html file, without any subdirectories.
 Default: source file name with last extension replaced with `.htm`.
