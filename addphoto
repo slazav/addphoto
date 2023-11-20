@@ -25,6 +25,7 @@ my %opts = (
   imgdir           => '',
   datadir          => '',
   cfg              => '',
+  ph_resize        => 'ph_resize',
   html             => '',
   html_filter      => '',
   html_stdout      => 0,
@@ -74,6 +75,7 @@ Getopt::Long::GetOptions(
   "c|cfg=s"         => \$opts{cfg},          # config file, .addphoto.cfg or addphoto/addphoto.cfg if empty
   "imgdir=s"        => \$opts{imgdir},       # image dir, relative to source file location, default input file name without last extension
   "datadir=s"       => \$opts{datadir},      # data dir (relative to source file location, default: same as imgdir)
+  "ph_resize=s"     => \$opts{ph_resize},    # path to ph_resize script (default: ph_resize)
   "H|html=s"        => \$opts{html},         # html file (relative to source file location)
   "html_filter=s"   => \$opts{html_filter},  # filter for source html
   "html_stdout:1"   => \$opts{html_stdout},  # print source html to stdout instead of writing to file. html option is still needed.
@@ -480,7 +482,7 @@ if ($cmds{init} || $cmds{init_only}){
 
     # get width of small thumbnail (it can be missing!)
     my ($ret, $w, $h) =
-      split(/\s+/, `ph_resize --scale "$opts{th1_size}" --dryrun --printres "$path" /dev/null`);
+      split(/\s+/, `$opts{ph_resize} --scale "$opts{th1_size}" --dryrun --printres "$path" /dev/null`);
 
     # time from exif
     my ($time,$alt,$lat,$lon) = get_exif($path);
@@ -1006,7 +1008,7 @@ for (my $i=0; $i<@ph; $i++){
     if (isolder($ph->{th1path}, $ph->{imgpath}) ||
         (thmark_check($ph->{th1path}) && ! $ph->{_use_marks} && !$ph->{_use_multi})){
       print STDERR "  updating thumbnail: " if $opts{verbose};
-      `ph_resize --scale "$opts{th1_size}" --verbose "$opts{verbose}"\\
+      `$opts{ph_resize} --scale "$opts{th1_size}" --verbose "$opts{verbose}"\\
          --quality "$opts{quality}" --rm_exif "$opts{th1_rm_exif}" "$ph->{imgpath}" "$ph->{th1path}"`;
     }
     ## add thumbnail mark if needed
@@ -1019,7 +1021,7 @@ for (my $i=0; $i<@ph; $i++){
     # th1 size is needed for html index even if file does not exist
      my $ret;
     ($ret, $ph->{th1_w}, $ph->{th1_h}) =
-      split /\s+/,`ph_resize --scale "$opts{th1_size}" --verbose 0 --dryrun "$ph->{imgpath}" /dev/null`;
+      split /\s+/,`$opts{ph_resize} --scale "$opts{th1_size}" --verbose 0 --dryrun "$ph->{imgpath}" /dev/null`;
   }
 
   ############################################################
@@ -1032,7 +1034,7 @@ for (my $i=0; $i<@ph; $i++){
     ## if th2 file is older then the image, update it
     if (isolder($ph->{th2path}, $ph->{imgpath})){
       print STDERR "  updating medium-size image: " if $opts{verbose};
-      `ph_resize --scale "$opts{th2_size}" --verbose "$opts{verbose}"\\
+      `$opts{ph_resize} --scale "$opts{th2_size}" --verbose "$opts{verbose}"\\
          --quality "$opts{quality}" --rm_exif "$opts{th2_rm_exif}" "$ph->{imgpath}" "$ph->{th2path}"`;
     }
     ## th2 size
@@ -1726,7 +1728,7 @@ foreach my $b (@data){
     unless ($b->{th1_w} && $b->{th1_h}) {
       my $ret;
       ($ret, $b->{th1_w}, $b->{th1_h}) =
-      split(/\s+/, `ph_resize --scale "$opts{th1_size}" --dryrun --printres "$b->{imgpath}" /dev/null`);
+      split(/\s+/, `$opts{ph_resize} --scale "$opts{th1_size}" --dryrun --printres "$b->{imgpath}" /dev/null`);
     }
 
     # start a new row only if align = center

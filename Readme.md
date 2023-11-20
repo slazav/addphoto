@@ -17,26 +17,40 @@ Program reads a source file and creates html.
 * Run `addphoto -I mytext` to create template of a source file `mytxt.ph`
 * Edit source file and run `addphoto mytxt.ph`
 
+To run the scripts one should have following programs:
+
+* `perl`
+* `exiv2`
+* `identify`, `mogrify`, `convert` from ImageMagick
+* `fig2dev` from xfig -- if fig marks are used
+
+Script `ph_resize` from this package is also needed. Normally it should be
+installed in system path. If not, `--ph_resize` option can be used to
+set path to this program.
 
 ### List of all options
 
-Options can be set in the command line, in configuration file
-(see `--cfg` option) or in the input file (`\set` command).
+Command line options:
 
 *  `h|help`            -- print help message
-*  `v|verbose:1`       -- be verbose
 *  `I|init=s`          -- INIT MODE. Create a new source file. Argument is a folder with photos.
 *  `J|init_only`       -- Same, but stop after creating the source file, do not make html.
+*  `O|opts:1`          -- Read file, print options and exit
+*  `D|defs:1`          -- Read file, dum definitions and exit
+*  `E|expand=s`        -- expand a string using variables defined in the file and exit
+*  `C|cleanup`         -- CLEANUP MODE: remove unused files and exit
+*  `index_only:1` -- stop after updating index (default: 0)
+
+Other options can be set from command line, in configuration file
+(see `--cfg` option) or in the input file (`\set` command).
+
+*  `v|verbose:1`       -- be verbose
 *  `T|init_tsort:1`    -- init mode: sort photos by time
 *  `d|init_days:1`     -- init mode: add day headers
 *  `r|init_rec:1`      -- init mode: find files recursively
 *  `w|init_width=i`    -- init mode: max page width
 *  `init_img_mask=s`   -- init mode: regular expression for finding filenames with images.
                           Default: `(.jpe?g$)|(.png$)|(.tiff?$)|(.gif)$`
-*  `O|opts:1`          -- Read file, print options and exit
-*  `D|defs:1`          -- Read file, dum definitions and exit
-*  `E|expand=s`        -- expand a string using variables defined in the file and exit
-*  `C|cleanup`         -- CLEANUP MODE: remove unused files and exit
 *  `f|force:1`         -- cleanup mode: do not ask before deleting files
 *  `dryrun:1`          -- cleanup mode: do not delete files
 
@@ -52,6 +66,8 @@ before reading the source file. If empty, then `addphoto.cfg` or
 `addphoto/addphoto.cfg` is used. The file should contain lines in the
 form `[/<reg.ex.>/ ]<option name>[ <option value>]`. If regular
 expression exists then the option is used only if source file name is matching.
+
+*  `ph_resize` -- path to `ph_resize` program. Default: `ph_resize`.
 
 *  `H|html=s`  -- Name of html file, without any subdirectories.
 Default: source file name with last extension replaced with `.htm`.
@@ -84,9 +100,7 @@ will be used for references in photo pages.
 *  `html_screen_sw:1`  -- add "fit to screen" switch to html pages
 *  `html_arrows:1`     -- add navigation (ctrl-left/ctrl-right/esc buttons) to html pages
 *  `html_resize:1`     -- resizable images in html pages (default state of "size" button)
-
-*  `index:1`      -- Use index (default: 0)
-*  `index_only:1` -- stop after updating index (default: 0)
+*  `index:1`           -- Use index (default: 0)
 
 ### File and directories
 
@@ -370,14 +384,6 @@ Example:
 \ref ../dir3/file3.htm  <br>${ref}
 ```
 
-### Dependencies
-
-To run the scripts one should have following programs:
-
-* `perl`
-* `exiv2`
-* `identify`, `mogrify`, `convert` from ImageMagick
-* `fig2dev` from xfig -- if fig marks are used
 
 ### Additional scripts
 
