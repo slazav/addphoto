@@ -332,8 +332,8 @@ After the definition following expansions are done:
 - `${<name>:+<word>}` expands to `<word>` if variable is defined and to empty string if not.
 
 Pre-defined variables:
-- `${INNAME}` -- name (without path) of the source file
-- `${INBASE}` -- base name (without path and extension) of the source file
+- `${SRC_FILE}` -- name (without directories) of the source file
+- `${SRC_BASE}` -- base name (without directories and last extension) of the source file
 
 Variable names are used in `\ifdef <var_name> <text>` and `\ifndef
 <var_name> <text>` commands.

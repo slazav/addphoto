@@ -718,7 +718,7 @@ sub read_file($$$$){
   }
 }
 
-my %defs = ('INNAME' => $src_base.$src_ext, 'INBASE' => $src_base);
+my %defs = ('SRC_FILE' => $src_base.$src_ext, 'SRC_BASE' => $src_base);
 my @data;
 read_file($src_path, \@data, \%defs, \%opts);
 
