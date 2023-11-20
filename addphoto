@@ -121,8 +121,8 @@ push @ARGV, $cmds{init_only} . ".ph" if ($cmds{init_only} && @ARGV==0);
 die "Usage: $0 [options] <input file>" unless @ARGV==1;
 $opts{imgdir} = $cmds{init} || $cmds{init_only} || $opts{imgdir};
 
-# source file name
-my $infile = shift;
+# path to the source file
+my $src_path = shift;
 
 
 
@@ -185,13 +185,13 @@ sub rel_dir($$){
 #################################################################
 
 # split source file name
-my ($inpath, $inbase, $inext) = path_split($infile);
-$inpath = './' if $inpath eq '';
+my ($src_dir, $src_base, $src_ext) = path_split($src_path);
+$src_dir = './' if $src_dir eq '';
 
 # html file name (relative to source file, can be changed later)
-$opts{html} = "$inbase.htm" unless $opts{html};
-$opts{imgdir}  = $inbase unless $opts{imgdir};
-$opts{datadir} = $inbase unless $opts{datadir};
+$opts{html} = "$src_base.htm" unless $opts{html};
+$opts{imgdir}  = $src_base unless $opts{imgdir};
+$opts{datadir} = $src_base unless $opts{datadir};
 
 # add trailing / if needed
 $opts{imgdir} =~ s/([^\/])$/$1\//;
@@ -436,7 +436,7 @@ if ($opts{cfg}){
 
     if (/^\s*(\/(.*)\/\s*)?([[:word:]]+)(\s+(.*))?/){
       my ($re, $k, $v) = ($2, $3, $5);
-      next if defined($re) && $infile!~/$re/;
+      next if defined($re) && $src_path!~/$re/;
       if (exists $opts{$k}){
         $opts{$k} = $v || '';
       }
@@ -457,15 +457,15 @@ if ($opts{cfg}){
 if ($cmds{init} || $cmds{init_only}){
 
   print STDERR "[Creating source file...]\n" if $opts{verbose};
-  die "can't find base folder: $inpath\n"
-    unless -d $inpath;
+  die "can't find base folder: $src_dir\n"
+    unless -d $src_dir;
 
-  die "can't find image folder: $inpath$opts{imgdir}\n"
-    unless -d "$inpath$opts{imgdir}";
+  die "can't find image folder: $src_dir$opts{imgdir}\n"
+    unless -d "$src_dir$opts{imgdir}";
 
   ## get image file list
   my @files = grep {/$opts{init_img_mask}/i}
-    read_dir("$inpath$opts{imgdir}", $opts{init_rec});
+    read_dir("$src_dir$opts{imgdir}", $opts{init_rec});
 
   ## remove thumbnail, mark, html files from the list
   @files = grep {!/^$opts{th1_pref}.+$opts{init_img_mask}|\/$opts{th1_pref}.+$opts{init_img_mask}/i} @files
@@ -478,7 +478,7 @@ if ($cmds{init} || $cmds{init_only}){
   ## collect information about files: date, time, thumbnail width
   my %files;
   foreach my $file (@files) {
-    my $path = "$inpath$opts{imgdir}$file";
+    my $path = "$src_dir$opts{imgdir}$file";
 
     # get width of small thumbnail (it can be missing!)
     my ($ret, $w, $h) =
@@ -491,16 +491,16 @@ if ($cmds{init} || $cmds{init_only}){
     my $date = (split(/\s+/, $time))[0] || '';
 
     # relative path
-    my $p = $file; $p=~s|^$inpath||; # relative dir
+    my $p = $file; $p=~s|^$src_dir||; # relative dir
 
     $files{$file} = {w=>$w, d=>$date, t=>$time, p=>$p};
   }
 
-  rename $infile, "$infile.bak" if -f $infile;
-  open OUT, "> $infile" or die "Can't open $infile: $!\n";
+  rename $src_path, "$src_path.bak" if -f $src_path;
+  open OUT, "> $src_path" or die "Can't open $src_path: $!\n";
 
   print OUT "\\set imgdir $opts{imgdir}\n"
-    if $opts{imgdir} ne "$inbase/";
+    if $opts{imgdir} ne "$src_base/";
 
 
   my $ww=0;  # current width
@@ -686,7 +686,7 @@ sub read_file($$$$){
 
     if (/^\\inc\s+(\S+)/){ # include a file
       die "wrong context for include command: $ctx" if $ctx ne '';
-      read_file("$inpath$1", $data, $defs, $opts);
+      read_file("$src_dir$1", $data, $defs, $opts);
       next;
     }
 
@@ -718,9 +718,9 @@ sub read_file($$$$){
   }
 }
 
-my %defs = ('INNAME' => "$inbase$inext", 'INBASE' => $inbase);
+my %defs = ('INNAME' => $src_base.$src_ext, 'INBASE' => $src_base);
 my @data;
-read_file($infile, \@data, \%defs, \%opts);
+read_file($src_path, \@data, \%defs, \%opts);
 
 #################################################################
 #################################################################
@@ -736,8 +736,8 @@ die "html filename should not contain /\n" if $opts{html} =~/\//;
 
 my $imgdir = $opts{imgdir};
 my $datadir = $opts{datadir};
-$imgdir  = "$inpath$imgdir"  unless $imgdir =~ /^\//;
-$datadir = "$inpath$datadir" unless $datadir =~ /^\//;
+$imgdir  = "$src_dir$imgdir"  unless $imgdir =~ /^\//;
+$datadir = "$src_dir$datadir" unless $datadir =~ /^\//;
 
 #################################################################
 #################################################################
@@ -749,7 +749,7 @@ my %index;
 # If file is missing do nothing.
 sub read_index($){
   my $idx_path=shift;
-  $idx_path  = "$inpath$idx_path"  unless $idx_path =~ /^\//;
+  $idx_path  = "$src_dir$idx_path"  unless $idx_path =~ /^\//;
   $idx_path =~ s|^./||g; # strip ./ in the beginning (we use this for keys!)
   my $idx_file = $idx_path.'addphoto.idx';
 
@@ -785,7 +785,7 @@ sub read_index($){
 # Write index. Argument - path from source file location or global path.
 sub write_index($){
   my $idx_path=shift;
-  $idx_path  = "$inpath$idx_path"  unless $idx_path =~ /^\//;
+  $idx_path  = "$src_dir$idx_path"  unless $idx_path =~ /^\//;
   my $idx_file = $idx_path.'addphoto.idx';
 
   open(OUT, ">", $idx_file) or
@@ -873,10 +873,13 @@ if ($cmds{cleanup}){
     }
   }
 
-  # add source file if needed
-  $keep{$infile} = 1 if $opts{imgdir} eq '.';
-  $keep{"$inpath$opts{html}"} = 1;
+  # add source file and html if needed
+  if ($opts{imgdir} eq '.') {
+    $keep{$src_path} = 1;
+    $keep{$src_dir.$opts{html}} = 1;
+  }
 
+  # add .js and .css
   if ($imgdir eq $datadir){
     $keep{$_} = 1 foreach (glob "${imgdir}addphoto_*");
   }
@@ -1661,7 +1664,7 @@ my $in_row=0;
 my $np=0;
 my $nh=0;
 
-my $html = $opts{html_stdout} ? '/dev/stdout' : $inpath.$opts{html};
+my $html = $opts{html_stdout} ? '/dev/stdout' : $src_dir.$opts{html};
 
 if ($opts{html_filter}){
   open OUT, "|-", "$opts{html_filter} > $html"
