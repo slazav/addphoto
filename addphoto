@@ -16,6 +16,7 @@ my %cmds = (
   expand           => '',
   cleanup          => 0,
   index_only       => 0,
+  find_root        => 0,
 );
 
 #################################################################
@@ -70,6 +71,7 @@ Getopt::Long::GetOptions(
   "E|expand=s"      => \$cmds{expand},       # Expand variables in a string
   "C|cleanup"       => \$cmds{cleanup},      # CLEANUP MODE: remove unused files and exit
   "index_only:1"    => \$cmds{index_only},   # stop after updating index
+  "find_root:1"     => \$cmds{find_root},    # find root folder
 
   "v|verbose:1"     => \$opts{verbose},      # be verbose
   "c|cfg=s"         => \$opts{cfg},          # config file, .addphoto.cfg or addphoto/addphoto.cfg if empty
@@ -182,13 +184,54 @@ sub rel_dir($$){
   return $ret;
 }
 
+## Get absolute path of dir1.
+sub abs_dir_arr($){
+  my $p = shift;
+  return $p if $p=~/^\//;
+  my $c = `pwd`;
+  chomp($c);
+  my @d1 = split('/', "$c/$p");
+  my @ret;
+  foreach my $v (@d1){
+    next if $v eq '.';
+    next if $v eq '';
+    if ($v eq '..'){
+      die "bad path $p" if $#ret<0;
+      pop @ret;
+      next;
+    }
+    push @ret, $v;
+  }
+  return @ret;
+#  return '/' . join('/', @ret);
+}
+
 #################################################################
 
 # split source file name
 my ($src_dir, $src_base, $src_ext) = path_split($src_path);
 $src_dir = './' if $src_dir eq '';
 
-# html file name (relative to source file, can be changed later)
+# find_root mode
+my $htm_root = '.';
+my $htm_dir  = '';
+if ($cmds{find_root}){
+  my @p = abs_dir_arr($src_dir);
+  my @q;
+  my @n;
+  while ( ! -d '/'.join('/', @p).'/addphoto'){
+    die "can't find root (with addphoto folder)" if $#p<0;
+    push @q, '..';
+    unshift(@n, (pop @p));
+  }
+  $htm_root = join '/', @q;
+  $htm_dir  = join '/', @n;
+  $opts{datadir} = "$htm_root/addphoto" unless $opts{datadir};
+  $opts{cfg} = "$htm_root/addphoto/addphoto.cfg" unless $opts{cfg};
+  $htm_root = '.' if $htm_root eq '';
+}
+
+#  file name (relative to source file, can be changed later)
 $opts{html} = "$src_base.htm" unless $opts{html};
 $opts{imgdir}  = $src_base unless $opts{imgdir};
 $opts{datadir} = $src_base unless $opts{datadir};
@@ -718,7 +761,12 @@ sub read_file($$$$){
   }
 }
 
-my %defs = ('SRC_FILE' => $src_base.$src_ext, 'SRC_BASE' => $src_base);
+my %defs;
+$defs{_SRC_FILE_} = $src_base.$src_ext;
+$defs{_SRC_BASE_} = $src_base;
+$defs{_HTML_ROOT_} = $htm_root;
+$defs{_HTML_DIR_}  = $htm_dir;
+
 my @data;
 read_file($src_path, \@data, \%defs, \%opts);
 
@@ -731,7 +779,7 @@ read_file($src_path, \@data, \%defs, \%opts);
 $opts{imgdir}  =~ s/([^\/])$/$1\//;
 $opts{datadir} =~ s/([^\/])$/$1\//;
 
-# chech $opts{html} - it should be filename without path!
+# check $opts{html} - it should be filename without path!
 die "html filename should not contain /\n" if $opts{html} =~/\//;
 
 my $imgdir = $opts{imgdir};
@@ -763,7 +811,7 @@ sub read_index($){
 
       if (/^\* (.*)/){
         my $k = $idx_path.$1;
-        $curr = $index{$k} = {HTML=>$k};
+        $curr = $index{$k} = {_HTML_=>$k};
         next;
       }
 
@@ -795,7 +843,7 @@ sub write_index($){
   foreach my $f (sort keys %index){
     print OUT "* $f\n";
     foreach my $k (sort keys %{$index{$f}}){
-      next if $k eq 'HTML';
+      next if $k =~ /^_/;
       print OUT "  $k: $index{$f}->{$k}\n";
     }
   }

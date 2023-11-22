@@ -332,8 +332,10 @@ After the definition following expansions are done:
 - `${<name>:+<word>}` expands to `<word>` if variable is defined and to empty string if not.
 
 Pre-defined variables:
-- `${SRC_FILE}` -- name (without directories) of the source file
-- `${SRC_BASE}` -- base name (without directories and last extension) of the source file
+- `${_SRC_FILE_}` -- Name (without directories) of the source file.
+- `${_SRC_BASE_}` -- Base name (without directories and last extension) of the source file.
+- `${_HTML_ROOT_}` -- in find_root mode relative path to html root from source directory.
+- `${_HTML_DIR_}`  -- if find_root mode relative path to source file directory from root.
 
 Variable names are used in `\ifdef <var_name> <text>` and `\ifndef
 <var_name> <text>` commands.
@@ -364,8 +366,8 @@ pages and to make links between them.
 
 If option `index:1` is set, then the index is updated: each time
 addphoto creates an html page, it adds all variables defined in the
-source file to the index file `addphoto.idx` which is located in the
-same folder with html.
+source file (except ones with names starting with '_' character) to the
+index file `addphoto.idx` which is located in the same folder with html.
 
 If option `index_only:1` is set, addphoto only updates index, without
 generating html pages.
@@ -374,7 +376,7 @@ The `\ref <html_name> <text>` command will be replaced with `<text>`
 expanded using definitions from external html file. `<html_name>` can
 contain folders, in this case index file from this folder will be
 loaded.   Symbol `@` is used instead of `$` for variable expansions,
-`@{HTML}` will be replaced with `<html_name>`.
+`@{_HTML_}` will be replaced with `<html_name>`.
 
 Example:
 ```
@@ -387,6 +389,16 @@ Example:
 \ref ../dir3/file3.htm  <br>${ref}
 ```
 
+### Find_root
+
+If `find_root` option is set, then the program tries to find addphoto
+folder in one of parent directories. This folder will be set as default
+`--datadir`, and `addphoto.cfg` file in this folder will be set as
+default configuration file. `_HTML_ROOT_` variable will be set to
+relative path to html root from source directory, `_HTML_DIR_` variable
+will be set to relative path to source file directory from root.
+
+This could be useful to create navigation between folders of a single site.
 
 ### Additional scripts
 
