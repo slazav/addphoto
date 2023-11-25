@@ -1,5 +1,5 @@
 Name: addphoto
-Version: 3.0
+Version: 3.1
 Release: alt1
 Group: Graphics
 License: GPL3
@@ -25,6 +25,19 @@ Scripts for making html photo albums
 %_bindir/*
 
 %changelog
+* Sat Nov 25 2023 Vladislav Zavjalov <slazav@altlinux.org> 3.1-alt1
+v3.1 a few incompatable changes (variables, options)
+- Rename pre-defind variables:
+  INNAME, INBASE, HTML -> _SRC_FILE_, _SRC_BASE_, _HTML_.
+- If variable namestarts with _, do not put it in the index.
+- Rename option --init_width -> --page_width,
+  use it in init mode as before and also for html max-width setting.
+- Optional find_root feature: find root folder, use it in \inc, html filter,
+  set _HTML_ROOT_ and _HTML_DIR_ variables.
+- Improve functions for finding relative paths.
+- Add --ph_resize option: set path to ph_resize program
+  (useful if it's not installed in the system).
+
 * Sat Nov 18 2023 Vladislav Zavjalov <slazav@altlinux.org> 3.0-alt1
 v3.0. Many changes, some are incompatable with previous versions
 New features:
