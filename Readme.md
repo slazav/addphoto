@@ -75,7 +75,8 @@ expression exists then the option is used only if source file name is matching.
 *  `H|html=s`  -- Name of html file, without any subdirectories.
 Default: source file name with last extension replaced with `.htm`.
 
-*  `html_filter=s` -- Filter for the main html file, for example `m4 defs.m4 -`
+*  `html_filter=s` -- Filter for the main html file, for example `m4 defs.m4 -`.
+Filter is run in the source file folder unless `--find_root` option is set.
 
 *  `html_stdout:1` -- Print the main html page to stdout instead of writing to
 file. Name of the final file should be set anyway with html option, it
@@ -104,6 +105,7 @@ will be used for references in photo pages.
 *  `html_arrows:1`     -- add navigation (ctrl-left/ctrl-right/esc buttons) to html pages
 *  `html_resize:1`     -- resizable images in html pages (default state of "size" button)
 *  `index:1`           -- Use index (default: 0)
+*  `find_root:1`       -- See below in Find Root section (default: 0)
 
 ### File and directories
 
@@ -391,14 +393,26 @@ Example:
 
 ### Find_root
 
-If `find_root` option is set, then the program tries to find addphoto
-folder in one of parent directories. This folder will be set as default
-`--datadir`, and `addphoto.cfg` file in this folder will be set as
-default configuration file. `_HTML_ROOT_` variable will be set to
-relative path to html root from source directory, `_HTML_DIR_` variable
-will be set to relative path to source file directory from root.
+If `find_root` option is set, then the program tries to find `addphoto`
+folder in the source file folder or in one of parent folders. Place
+where is was found is the "root". This could be useful to create
+navigation between folders of a single site.
 
-This could be useful to create navigation between folders of a single site.
+* default `--datadir` will be set to `<root>/addphoto`
+
+* default configuration file will be set to `<root>/addphoto/addphoto.cfg`
+
+* `_HTML_ROOT_` variable will be set to relative path to the root
+  from the source file (empty or ending with `/`),
+
+* `_HTML_DIR_` variable will be set to relative path to source file
+directory from root (empty or ending with directory name).
+
+* `\inc` commands will work from the html root.
+
+* `--html_filter` will be run in the root folder. For example, if 
+the fileter is `m4 defs.m4 -`, then `defs.m4` file will be taken from
+the root folder.
 
 ### Additional scripts
 
