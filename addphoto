@@ -1621,7 +1621,7 @@ if (!$opts{nohtml} && $opts{html_screen_sw}) {
   print JS qq*
   // fit-to-screen switch
   function switch_fit(){
-    for (img of document.getElementsByClassName("addphoto-img0 addphoto-imgN")){
+    for (img of document.querySelectorAll(".addphoto-img0, .addphoto-imgN")){
       img.style.maxWidth = getComputedStyle(img).maxWidth == '100%'? null:'100%';
     }
   }
