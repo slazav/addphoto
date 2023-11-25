@@ -218,7 +218,7 @@ my ($src_dir, $src_base, $src_ext) = path_split($src_path);
 $src_dir = './' if $src_dir eq '';
 
 # find_root mode
-my $htm_root = '.';
+my $htm_root = '';
 my $htm_dir  = '';
 if ($cmds{find_root}){
   my @p = abs_dir_arr($src_dir);
@@ -230,10 +230,10 @@ if ($cmds{find_root}){
     unshift(@n, (pop @p));
   }
   $htm_root = join '/', @q;
+  $htm_root .= '/' if $htm_root;
   $htm_dir  = join '/', @n;
-  $opts{datadir} = "$htm_root/addphoto" unless $opts{datadir};
-  $opts{cfg} = "$htm_root/addphoto/addphoto.cfg" unless $opts{cfg};
-  $htm_root = '.' if $htm_root eq '';
+  $opts{datadir} = $htm_root.'addphoto' unless $opts{datadir};
+  $opts{cfg} = $htm_root.'addphoto/addphoto.cfg' unless $opts{cfg};
 }
 
 #  file name (relative to source file, can be changed later)
@@ -734,7 +734,7 @@ sub read_file($$$$){
 
     if (/^\\inc\s+(\S+)/){ # include a file
       die "wrong context for include command: $ctx" if $ctx ne '';
-      read_file("$src_dir$1", $data, $defs, $opts);
+      read_file("$src_dir$htm_root$1", $data, $defs, $opts);
       next;
     }
 
@@ -1720,7 +1720,7 @@ my $nh=0;
 my $html = $opts{html_stdout} ? '/dev/stdout' : $src_dir.$opts{html};
 
 if ($opts{html_filter}){
-  open OUT, "|-", "$opts{html_filter} > $html"
+  open OUT, "|-", "(cd $src_dir$htm_root && $opts{html_filter}) > $html"
     or die "Can't open $opts{html_filter} > $html: $!\n";
 }
 else {
