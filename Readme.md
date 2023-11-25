@@ -144,7 +144,7 @@ folder.
 * Thumbnails. There are two sizes of thumbnail images. Names for
 thumbnail images are made from image names by adding a prefix which can
 be set by options --th1_pref (for small thumbnails), --th2_pref (for
-large thumbnails). If the prefix ends with '/' then thumbnails are
+large thumbnails). If the prefix ends with `/` then thumbnails are
 located in a subfolder. Sizes of thumbnails are set by --th1_size and
 --th2_size options (in W1:W2:W3 format, see ph_resize script).
 
@@ -156,9 +156,9 @@ prefix which can be set by options --mark_pref. If the prefix ends with
 
 ### Source file syntax
 
-Commands are started at the beginning of line with '\' symbol. Symbol '\' in
-the beginning can be protected by putting another '\' in front of it.
-Line can be joined with the next one by putting '\' at the end.
+Commands are started at the beginning of line with `\` symbol. Symbol `\` in
+the beginning can be protected by putting another `\` in front of it.
+Line can be joined with the next one by putting `\` at the end.
 Other lines copied without changes. Commands:
 
 * `\photo <file(s)> <title>` --
