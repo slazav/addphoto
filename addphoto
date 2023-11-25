@@ -172,8 +172,13 @@ sub path_split($){
 ## Get relative path from dir1 to dir2.
 ## Absolute paths, . and .. are ignored!
 sub rel_dir($$){
-  my @d1 = grep {/.+/ && !/^\.{1,2}$/} split '/', shift;
-  my @d2 = grep {/.+/ && !/^\.{1,2}$/} split '/', shift;
+  my $p1 = shift;
+  my $p2 = shift;
+  die "rel_dir: can't work with absolute path: $p1" if $p1=~/^\//;
+  die "rel_dir: can't work with absolute path: $p2" if $p2=~/^\//;
+  my @d1 = grep {/.+/ && !/^\.$/} split '/', $p1;
+  my @d2 = grep {/.+/ && !/^\.$/} split '/', $p2;
+  die "rel_dir: .. in source path: $p1" if grep {/^\.\.$/} @d1;
   my $n;
   for ($n = 0; $n <= $#d1 && $n <= $#d2; $n++){
     last if ($d1[$n] ne $d2[$n])
