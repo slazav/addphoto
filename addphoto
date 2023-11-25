@@ -1504,9 +1504,18 @@ body {
 .addphoto-btn {
   color:blue;cursor:pointer;
   font: bold 10pt sans-serif;
-  padding:2 10px;
-  display:inline-block;
+  padding: 2px 2px 2px 15px;
+  display: inline-block;
 }
+#.addphoto-btn::before {
+#  color: grey;
+#  content: "[";
+#}
+#.addphoto-btn::after {
+#  color: grey;
+#  content: "]";
+#}
+
 .addphoto-title {
   font: 16pt sans-serif;
   margin: 0px; padding-bottom: 20px;
