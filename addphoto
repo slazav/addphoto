@@ -1216,6 +1216,7 @@ for (my $i=0; $i<@ph; $i++){
       $add{photo_head} || '',
       $add{photo_begin} || '',
       $add{photo_end} || '',
+      $add{find_root} || '',
       $html_version)));
     # get old key
     if (open KEY, $ph->{htmpath}) {
