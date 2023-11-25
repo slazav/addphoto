@@ -10,6 +10,11 @@ author: Vladislav Zavjalov (vl.zavjalov at gmail.com), 2004?-2023
 
 Program reads a source file and creates html.
 
+Example of a travel report generated with addphoto:
+https://slazav.xyz/lib/taj23.htm
+
+Source file for this report:
+https://slazav.xyz/lib/taj23.ph
 
 ### How to start
 
