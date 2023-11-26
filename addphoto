@@ -597,12 +597,16 @@ sub expand($$;$){
   # expanding variables
   foreach my $k (keys %{$defs}){
     $in=~s/$ch\{$k\}/$defs->{$k}/g;
-    $in=~s/$ch\{$k:\+([^\}]*)\}/$1/g;
-    $in=~s/$ch\{$k:\-([^\}]*)\}/$defs->{$k}/g;
-
   }
   # unset variables
   $in=~s/$ch\{[[:word:]]+\}//g;
+
+  # expanding +/- substitutions
+  foreach my $k (keys %{$defs}){
+    $in=~s/$ch\{$k:\+([^\}]*)\}/$1/g;
+    $in=~s/$ch\{$k:\-([^\}]*)\}/$defs->{$k}/g;
+  }
+  # unset variables
   $in=~s/$ch\{[[:word:]]+:\+([^\}]*)\}//g;
   $in=~s/$ch\{[[:word:]]+:\-([^\}]*)\}/$1/g;
   return $in;
