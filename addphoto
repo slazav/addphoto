@@ -853,7 +853,8 @@ sub write_index($){
     print OUT "* $f\n";
     foreach my $k (sort keys %{$index{$f}}){
       next if $k =~ /^_/;
-      print OUT "  $k: $index{$f}->{$k}\n";
+      my $v = expand1($index{$f}->{$k});
+      print OUT "  $k: $v\n";
     }
   }
   close OUT;
