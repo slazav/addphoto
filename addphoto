@@ -589,26 +589,48 @@ if ($cmds{init} || $cmds{init_only}){
 
 sub read_file($$$$);
 
+sub expand1($){
+  my $in    = shift;
+  # Order is important: RU/EN sould not be inside
+  # WWW, ONLYRU/ONLYEN should be later, NOHTM should be last.
+  $in=~s|(?<![[:word:]])WWW\{([^{}]*)\}|<a href=$1>$1</a>|gs;
+  $in=~s|(?<![[:word:]])RU\{([^{}]*)\}|<span class=ru>$1</span>|gs;
+  $in=~s|(?<![[:word:]])EN\{([^{}]*)\}|<span class=en>$1</span>|gs;
+  $in=~s|(?<![[:word:]])ONLYRU\{([^{}]*)\}|@{[one_lang($1,'ru')]}|gs;
+  $in=~s|(?<![[:word:]])ONLYEN\{([^{}]*)\}|@{[one_lang($1,'en')]}|gs;
+  $in=~s|(?<![[:word:]])NOHTM\{([^{}]*)\}|@{[remove_htm($1)]}|gs;
+  return $in;
+}
 
 sub expand($$;$){
   my $defs  = shift;
   my $in    = shift;
   my $ch    = shift || '\$';
-  # expanding variables
-  foreach my $k (keys %{$defs}){
-    $in=~s/$ch\{$k\}/$defs->{$k}/g;
-  }
-  # unset variables
-  $in=~s/$ch\{[[:word:]]+\}//g;
 
-  # expanding +/- substitutions
-  foreach my $k (keys %{$defs}){
-    $in=~s/$ch\{$k:\+([^\}]*)\}/$1/g;
-    $in=~s/$ch\{$k:\-([^\}]*)\}/$defs->{$k}/g;
-  }
-  # unset variables
-  $in=~s/$ch\{[[:word:]]+:\+([^\}]*)\}//g;
-  $in=~s/$ch\{[[:word:]]+:\-([^\}]*)\}/$1/g;
+  my $in0;
+
+  do {
+    $in0 = $in;
+
+    $in=expand1($in);
+
+    # expanding variables
+    foreach my $k (keys %{$defs}){
+      $in=~s/$ch\{$k\}/$defs->{$k}/g;
+    }
+    # unset variables
+    $in=~s/$ch\{[[:word:]]+\}//g;
+
+    # expanding +/- substitutions
+    foreach my $k (keys %{$defs}){
+      $in=~s/$ch\{$k:\+([^\}]*)\}/$1/g;
+      $in=~s/$ch\{$k:\-([^\}]*)\}/$defs->{$k}/g;
+    }
+    # unset variables
+    $in=~s/$ch\{[[:word:]]+:\+([^\}]*)\}//g;
+    $in=~s/$ch\{[[:word:]]+:\-([^\}]*)\}/$1/g;
+  } while ($in0 ne $in);
+
   return $in;
 }
 
@@ -625,19 +647,6 @@ sub one_lang($$){
     next if $keep eq $l;
     $in=~s|<span class=[\"\']?$l[\"\']?>.*?</span>||g;
   }
-  return $in;
-}
-
-sub expand1($){
-  my $in    = shift;
-  # Order is important: RU/EN sould not be inside
-  # WWW, ONLYRU/ONLYEN should be later, NOHTM should be last.
-  $in=~s|(?<![[:word:]])WWW\{(.*?)\}|<a href=$1>$1</a>|gs;
-  $in=~s|(?<![[:word:]])RU\{(.*?)\}|<span class=ru>$1</span>|gs;
-  $in=~s|(?<![[:word:]])EN\{(.*?)\}|<span class=en>$1</span>|gs;
-  $in=~s|(?<![[:word:]])ONLYRU\{(.*?)\}|@{[one_lang($1,'ru')]}|gs;
-  $in=~s|(?<![[:word:]])ONLYEN\{(.*?)\}|@{[one_lang($1,'en')]}|gs;
-  $in=~s|(?<![[:word:]])NOHTM\{(.*?)\}|@{[remove_htm($1)]}|gs;
   return $in;
 }
 
@@ -781,6 +790,22 @@ read_file($src_path, \@data, \%defs, \%opts);
 
 #################################################################
 #################################################################
+# expand functions: RU{}, EN{}, WWW{} -- this is important for multiline
+# text
+{
+  foreach my $b (@data){
+    for my $f ('text','title'){
+      next unless exists $b->{$f};
+      $b->{$f} = expand1($b->{$f});
+    }
+  }
+}
+
+
+
+
+#################################################################
+#################################################################
 ### recalculate paths (options could be changed in the source file)
 
 # now all configuration should be ready.
@@ -853,8 +878,7 @@ sub write_index($){
     print OUT "* $f\n";
     foreach my $k (sort keys %{$index{$f}}){
       next if $k =~ /^_/;
-      my $v = expand1($index{$f}->{$k});
-      print OUT "  $k: $v\n";
+      print OUT "  $k: $index{$f}->{$k}\n";
     }
   }
   close OUT;
@@ -872,8 +896,7 @@ exit 0 if $cmds{index_only};
 #################################################################
 # EXPAND call
 if ($cmds{expand}){
-  my $e = expand(\%defs, $cmds{expand});
-  print expand1($e);
+  print expand(\%defs, $cmds{expand});
   exit 0;
 }
 
@@ -969,19 +992,6 @@ if ($cmds{cleanup}){
 
   exit 0;
 }
-
-#################################################################
-#################################################################
-# expand functions: RU{}, EN{}, WWW{}
-{
-  foreach my $b (@data){
-    for my $f ('text','title'){
-      next unless exists $b->{$f};
-      $b->{$f} = expand1($b->{$f});
-    }
-  }
-}
-
 
 #################################################################
 #################################################################
@@ -1852,7 +1862,7 @@ foreach my $b (@data){
         next;
       }
       my $e = expand($index{$b->{name}}, $b->{text}, '@');
-      print OUT expand1($e), "\n";
+      print OUT $e, "\n";
       next;
     }
   }
