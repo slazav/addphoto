@@ -1645,22 +1645,22 @@ if (!$opts{nohtml} && $opts{html_screen_sw}) {
   print JS qq*
   // fit-to-screen switch
   function switch_fit(){
-    for (img of document.querySelectorAll(".addphoto-img0, .addphoto-imgN")){
+    for (img of document.querySelectorAll(".clickable img")){
       img.style.maxWidth = getComputedStyle(img).maxWidth == '100%'? null:'100%';
     }
   }
   // switch and scroll on click
   function click_fit(event){
-    var img0 = document.getElementById("img0");
-    var w1 = img0.width;
-    var h1 = img0.height;
+    var e = event.target;
+    var w1 = e.width;
+    var h1 = e.height;
     var xs = window.scrollX;
     var ys = window.scrollY;
-    var x0 = img0.getBoundingClientRect().left + xs;
-    var y0 = img0.getBoundingClientRect().top + ys;
+    var x0 = e.getBoundingClientRect().left + xs;
+    var y0 = e.getBoundingClientRect().top + ys;
     switch_fit();
-    var w2 = img0.width;
-    var h2 = img0.height;
+    var w2 = e.width;
+    var h2 = e.height;
     var kx = 1.0\*w2/w1;
     var ky = 1.0\*h2/h1;
     var xm  = event.clientX;
