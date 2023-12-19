@@ -1350,17 +1350,17 @@ for (my $i=0; $i<@ph; $i++){
     <div class=addphoto-nav>$nav
     </div>*;
 
-    my $mw = $opts{html_resize} ? 'maxwidth:100%;':'';
+    my $mw = $opts{html_resize} ? 'max-width:100%; max-height:80vh':'';
 
     # main image
     my $main=qq*
-        <img id=img0 class="addphoto-img0" style='width:${w}px;$mw'
+        <img id=img0 class="addphoto-img0" style="$mw"
            src='$imgref' alt='$ph->{atitle}'/>*;
 
     # marks overlay
     if ($ph->{_use_marks}){
       $main .= qq*
-        <img id=marks class="addphoto-imgN" style='width:${w}px;$mw'
+        <img id=marks class="addphoto-imgN" style="$mw"
              src='$ph->{mrkname}'/>*;
     }
 
@@ -1369,7 +1369,7 @@ for (my $i=0; $i<@ph; $i++){
       for(my $i=1; $i<=$#files+1; $i++){
         my ($d, $b, $e) = path_split($files[$i-1]);
         $main .= qq*
-          <img id="img$i" class="addphoto-imgN" style='width:${w}px;visibility:hidden;$mw'
+          <img id="img$i" class="addphoto-imgN" style="visibility:hidden;$mw"
              src='$b$e'/>*;
       }
     }
@@ -1646,7 +1646,8 @@ if (!$opts{nohtml} && $opts{html_screen_sw}) {
   // fit-to-screen switch
   function switch_fit(){
     for (img of document.querySelectorAll(".clickable img")){
-      img.style.maxWidth = getComputedStyle(img).maxWidth == '100%'? null:'100%';
+      img.style.maxWidth  = getComputedStyle(img).maxWidth  == 'none'? '100%':'none';
+      img.style.maxHeight = getComputedStyle(img).maxHeight == 'none'? '80vh':'none';
     }
   }
   // switch and scroll on click
