@@ -353,18 +353,18 @@ sub get_exif{
   # convert alt, lat, lon
   $n='Exif.GPSInfo.GPSAltitude';
   if ((exists $exif->{$n}) && ($exif->{$n}=~/^(\d+)\/(\d+)/)){
-    $alt = 1.0*$1/$2;
+    $alt = sprintf "%.0f", 1.0*$1/$2;
     # $n.Ref can be 0, 1 (invert altitude), 220/100 (xiaomi phones)
     $alt=-$alt if (exists $exif->{$n.'Ref'}) && ($exif->{$n.'Ref'} eq "1");
   }
   $n='Exif.GPSInfo.GPSLatitude';
   if ((exists $exif->{$n}) && ($exif->{$n}=~/^(\d+)\/(\d+)\s+(\d+)\/(\d+)\s+(\d+)\/(\d+)/)){
-    $lat = 1.0*$1/$2 + 1.0/60.0*$3/$4 + 1.0/3600.0*$5/$6;
+    $lat = sprintf "%.6f", 1.0*$1/$2 + 1.0/60.0*$3/$4 + 1.0/3600.0*$5/$6;
     $lat=-$lat if (exists $exif->{$n.'Ref'}) && ($exif->{$n.'Ref'}=~/^S/);
   }
   $n='Exif.GPSInfo.GPSLongitude';
   if ((exists $exif->{$n}) && ($exif->{$n}=~/^(\d+)\/(\d+)\s+(\d+)\/(\d+)\s+(\d+)\/(\d+)/)){
-    $lon = sprintf "%.7f", 1.0*$1/$2 + 1.0/60.0*$3/$4 + 1.0/3600.0*$5/$6;
+    $lon = sprintf "%.6f", 1.0*$1/$2 + 1.0/60.0*$3/$4 + 1.0/3600.0*$5/$6;
     $lon=-$lon if (exists $exif->{$n.'Ref'}) && ($exif->{$n.'Ref'}=~/^W/);
   }
   return ($time, $alt, $lat, $lon);
@@ -448,7 +448,7 @@ sub crd_url($$$){
 sub html_crd($$$){
   my ($lat, $lon, $name) = @_;
   my $url = crd_url($lat, $lon, $name);
-  if ($url) {return sprintf('<a href="%s">%.7f %.7f</a><br/>',$url, $lat, $lon);}
+  if ($url) {return sprintf('<a href="%s">%.7f %.7f</a>',$url, $lat, $lon);}
   return sprintf('%.7f %.7f', $lat, $lon);
 }
 
@@ -1283,7 +1283,7 @@ for (my $i=0; $i<@ph; $i++){
     # make language switch
     if ($opts{lang} eq 'select'){
       $top  .= qq*
-      <div align=right>
+      <div align=right class="addphoto-lang">
         <span class="ru_control" id=lang_ru onclick="lang_set('ru')">ru</span>
         <span class="en_control" id=lang_en onclick="lang_set('en')">en</span>
       </div>*;
@@ -1381,15 +1381,14 @@ for (my $i=0; $i<@ph; $i++){
 
 
     # info from exif
-    my $exif = '';
-    $exif .= "\n      <br/>" . get_msg('dat_fmt') . ' ' . $ph->{time} if $ph->{time};
-    $exif .= "\n      <br/>" . get_msg('alt_fmt') . ' ' . $ph->{alt}  if $ph->{alt};
-    $exif .= "\n      <br/>" . get_msg('crd_fmt') . ' ' .
-       html_crd($ph->{lat}, $ph->{lon}, $ph->{imgname}) if $ph->{lat} && $ph->{lon};
+    my @exif;
+    push @exif, $ph->{time} if $ph->{time};
+    push @exif, html_crd($ph->{lat}, $ph->{lon}, $ph->{imgname}) if $ph->{lat} && $ph->{lon};
+    push @exif, $ph->{alt}. ' m'  if $ph->{alt};
+    my $exif = join ' &mdash; ', @exif;
 
     $btm .= qq*
-      <div class=addphoto-info>$exif
-      </div>*;
+      <div class=addphoto-info>$exif</div>*;
 
     # full size
     if ($ph->{use_th2}) {
@@ -1505,6 +1504,12 @@ body {
   text-align: center;
 }
 
+.addphoto-lang {
+  position: absolute;
+  top: 0; right:0;
+  padding: 0 0.5em;
+}
+
 .addphoto-img0 {
   height:auto;
   position: relative;
@@ -1541,13 +1546,11 @@ body {
 #}
 
 .addphoto-title {
-  font: 16pt sans-serif;
-  margin: 0px; padding-bottom: 20px;
-  border-bottom: 1px solid #E0E0E0;
+  font: large sans-serif;
   width: 100%;
 }
 .addphoto-info {
-  font: bold 8pt sans-serif;
+  font: small sans-serif;
 }
 /* marks layer */
 #marks {
