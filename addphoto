@@ -113,7 +113,7 @@ Getopt::Long::GetOptions(
   "index:1"         => \$opts{index},        # use index file (default: do not use index)
 ) or die "bad option";
 
-my $html_version = '3.0'; # changes when regenerating of html pages is needed
+my $html_version = '3.1'; # changes when regenerating of html pages is needed
 
 #pod2usage(-exitval => 0, -verbose => 2) if $cmds{help};
 
@@ -1376,7 +1376,7 @@ for (my $i=0; $i<@ph; $i++){
 
     # wrap images into a div
     $main = qq*
-      <div style="position: relative;" class="clickable">$main
+      <div style="position: relative;" class="addphoto-imgs">$main
       </div>*;
 
 
@@ -1520,7 +1520,7 @@ body {
   position: absolute; left: 0px; top: 0px;
 }
 
-.clickable {
+.addphoto-imgs {
   height:auto;
   display: inline-block;
 }
@@ -1657,7 +1657,7 @@ if (!$opts{nohtml} && $opts{html_screen_sw}) {
   print JS qq*
   // fit-to-screen switch
   function switch_fit(){
-    for (img of document.querySelectorAll(".clickable img")){
+    for (img of document.querySelectorAll(".addphoto-imgs img")){
       img.style.maxWidth  = getComputedStyle(img).maxWidth  == 'none'? '100%':'none';
       img.style.maxHeight = getComputedStyle(img).maxHeight == 'none'? '80vh':'none';
     }
@@ -1681,7 +1681,7 @@ if (!$opts{nohtml} && $opts{html_screen_sw}) {
     window.scroll(x0-xm + kx\*(xs-x0+xm), y0-ym + ky\*(ys-y0+ym));
   }
   function set_click(){
-    for (i of document.getElementsByClassName("clickable")){
+    for (i of document.getElementsByClassName("addphoto-imgs")){
       i.addEventListener('click', click_fit); } }
   window.addEventListener('load', set_click);
   // switch on S key
