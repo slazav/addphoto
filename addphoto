@@ -1486,7 +1486,6 @@ body {
   max-width:100%;
   height:auto;
 }
-body
 ];
 close STY;
 
@@ -1499,6 +1498,11 @@ a {
 }
 body {
   background-color: white;
+  margin: 0;
+  max-width: 100vw;
+  max-height: 100vh;
+  padding: 5px;
+  text-align: center;
 }
 
 .addphoto-img0 {
@@ -1509,6 +1513,11 @@ body {
 .addphoto-imgN {
   height:auto;
   position: absolute; left: 0px; top: 0px;
+}
+
+.clickable {
+  height:auto;
+  display: inline-block;
 }
 
 .addphoto-nav {
