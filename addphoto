@@ -1662,28 +1662,63 @@ if (!$opts{nohtml} && $opts{html_screen_sw}) {
       img.style.maxHeight = getComputedStyle(img).maxHeight == 'none'? '80vh':'none';
     }
   }
-  // switch and scroll on click
-  function click_fit(event){
-    var e = event.target;
-    var w1 = e.width;
-    var h1 = e.height;
-    var xs = window.scrollX;
-    var ys = window.scrollY;
-    var x0 = e.getBoundingClientRect().left + xs;
-    var y0 = e.getBoundingClientRect().top + ys;
-    switch_fit();
-    var w2 = e.width;
-    var h2 = e.height;
-    var kx = 1.0\*w2/w1;
-    var ky = 1.0\*h2/h1;
-    var xm  = event.clientX;
-    var ym  = event.clientY;
-    window.scroll(x0-xm + kx\*(xs-x0+xm), y0-ym + ky\*(ys-y0+ym));
-  }
+  // scroll-on-drag + fit-on-click
+  // see https://phuoc.ng/collection/html-dom/drag-to-scroll/
+  function on_mouse_down(e) {
+    pos = {
+        left: window.scrollX,
+        top: window.scrollY,
+        x: e.clientX,
+        y: e.clientY,
+    };
+    for (i of document.getElementsByClassName("addphoto-imgs")){
+      i.addEventListener('mousemove', on_mouse_move);
+      i.addEventListener('mouseup', on_mouse_up);
+      i.addEventListener('mouseout', on_mouse_up);
+    }
+    e.preventDefault();
+  };
+
+  function on_mouse_move(e) {
+    const dx = e.clientX - pos.x;
+    const dy = e.clientY - pos.y;
+    window.scroll(pos.left - dx, pos.top - dy);
+    e.preventDefault();
+  };
+
+  function on_mouse_up(e) {
+    const dx = e.clientX - pos.x;
+    const dy = e.clientY - pos.y;
+    for (i of document.getElementsByClassName("addphoto-imgs")){
+      i.removeEventListener('mousemove', on_mouse_move);
+      i.removeEventListener('mouseup', on_mouse_up);
+      i.removeEventListener('mouseout', on_mouse_up);
+    }
+    if (dx==0 && dy==0) {
+      var el = e.target;
+      var w1 = el.width;
+      var h1 = el.height;
+      var xs = window.scrollX;
+      var ys = window.scrollY;
+      var x0 = el.getBoundingClientRect().left + xs;
+      var y0 = el.getBoundingClientRect().top + ys;
+      switch_fit();
+      var w2 = el.width;
+      var h2 = el.height;
+      var kx = 1.0\*w2/w1;
+      var ky = 1.0\*h2/h1;
+      var xm  = event.clientX;
+      var ym  = event.clientY;
+      window.scroll(x0-xm + kx\*(xs-x0+xm), y0-ym + ky\*(ys-y0+ym));
+    }
+  };
   function set_click(){
     for (i of document.getElementsByClassName("addphoto-imgs")){
-      i.addEventListener('click', click_fit); } }
+      i.addEventListener('mousedown', on_mouse_down, true);
+    }
+  }
   window.addEventListener('load', set_click);
+
   // switch on S key
   function fit_key(event){ if (event.code == 'KeyS'){ switch_fit(); }}
   window.addEventListener('keydown', fit_key);
