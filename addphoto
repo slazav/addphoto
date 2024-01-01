@@ -1694,7 +1694,7 @@ if (!$opts{nohtml} && $opts{html_screen_sw}) {
       i.removeEventListener('mouseup', on_mouse_up);
       i.removeEventListener('mouseout', on_mouse_up);
     }
-    if (dx==0 && dy==0) {
+    if (Math.abs(dx)<5 && Math.abs(dy)<5) {
       var el = e.target;
       var w1 = el.width;
       var h1 = el.height;
