@@ -1,5 +1,5 @@
 Name: addphoto
-Version: 3.1
+Version: 3.2
 Release: alt1
 Group: Graphics
 License: GPL3
@@ -25,6 +25,14 @@ Scripts for making html photo albums
 %_bindir/*
 
 %changelog
+* Sun Jan 07 2024 Vladislav Zavjalov <slazav@altlinux.org> 3.2-alt1
+v3.2:
+- fix {} expansions
+- expand RU{}, EN{}, WWW{} in the index
+- New design of photo pages (centered, more compact)
+- rewrite image size switching
+- scroll-on-drag feature with big images
+
 * Sat Nov 25 2023 Vladislav Zavjalov <slazav@altlinux.org> 3.1-alt1
 v3.1 a few incompatable changes (variables, options)
 - Rename pre-defind variables:
