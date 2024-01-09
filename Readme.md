@@ -111,6 +111,8 @@ will be used for references in photo pages.
 *  `html_resize:1`     -- resizable images in html pages (default state of "size" button)
 *  `index:1`           -- Use index (default: 0)
 *  `find_root:1`       -- See below in Find Root section (default: 0)
+*  `pswp:1`            -- use PhotoSwipe library
+*  `pswp_url=s`        -- url where PhotoSwipe is located
 
 ### File and directories
 
@@ -418,6 +420,13 @@ directory from root (empty or ending with directory name).
 * `--html_filter` will be run in the root folder. For example, if 
 the fileter is `m4 defs.m4 -`, then `defs.m4` file will be taken from
 the root folder.
+
+### PhotoSwipe support
+
+There is a basic support for PhotoSwipe library (https://photoswipe.com,
+tested with v.5.4.3, no marks and multiple images yet). Options are:
+*  `pswp:1`            -- use PhotoSwipe library
+*  `pswp_url=s`        -- url where PhotoSwipe is located
 
 ### Additional scripts
 
