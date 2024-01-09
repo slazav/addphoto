@@ -1876,8 +1876,8 @@ foreach my $b (@data){
     else               { $a_attrs .= " href='$htmfile'"; }
     print OUT "<div class=addphoto-img-$b->{align}><a$a_attrs>\n";
     print OUT "<img src='$th_file' alt='$b->{atitle}'" .
-              " width=$b->{th1_w} height=$b->{th1_h}".
-              " class=addphoto-th/></a>\n";
+              " width='$b->{th1_w}' height='$b->{th1_h}'".
+              " class='addphoto-th'/></a>\n";
     print OUT "<br/><div class=addphoto-caption style='width:$b->{th1_w}px'>$b->{title}</div>\n";
     print OUT "</div>\n";
   }
