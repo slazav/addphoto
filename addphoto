@@ -1878,7 +1878,7 @@ foreach my $b (@data){
     print OUT "<img src='$th_file' alt='$b->{atitle}'" .
               " width='$b->{th1_w}' height='$b->{th1_h}'".
               " class='addphoto-th'/></a>\n";
-    print OUT "<br/><div class=addphoto-caption style='width:$b->{th1_w}px'>$b->{title}</div>\n";
+    print OUT "<div class=addphoto-caption style='width:$b->{th1_w}px'>$b->{title}</div>\n";
     print OUT "</div>\n";
   }
   else{
