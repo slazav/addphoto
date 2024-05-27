@@ -1590,19 +1590,13 @@ if ($opts{lang} eq 'select'){
   }
   // save language to storage/cookies
   function lang_save(v){
-    // use storage
-    if (typeof(Storage) !== "undefined") {
-      localStorage.setItem("lang", v);
-    }
+    document.cookie = "lang=" + v + ";path=/";
   }
   // load language from storage/cookies
   function lang_load(){
-    if (typeof(Storage) !== "undefined") {
-      v = localStorage.getItem("lang");
-      return v? v: lang_def();
-    } else {
-      return lang_def();
-    }
+    var match = document.cookie.match(new RegExp('(^| )lang=([^;]+)'));
+    if (match) return match[2];
+    return lang_def();
   }
   // set language from button
   function lang_set(lang){
