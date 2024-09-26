@@ -405,7 +405,7 @@ my %msgs_ru = (
   nref     => 'следующая (Ctrl-Right)',
   fullsize => 'полный размер',
   sw_size  => 'размер (S или левая кнопка мыши)',
-  sw_mark  => 'отметки (M or Enter)',
+  sw_mark  => 'отметки (M или Enter)',
   sw_imgs  => 'картинки (I)',
   sw_lang  => 'язык (T)',
 );
