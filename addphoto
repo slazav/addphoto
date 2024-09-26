@@ -312,14 +312,21 @@ sub fig_im_scale($$){
 sub html_toc($$){
   my $fh = shift;
   my $data = shift;
-  my $dp=0; # prev depth
-  my $d0=0; # initial depth
+
+  # find minimum depth
+  my $d0;
+  foreach my $b (@{$data}){
+    next unless $b->{type} eq 'head';
+    my ($d, $t) = ($b->{depth}, $b->{title});
+    if (! $d0 || $d<=$d0){ $d0=$d-1; }
+  }
+
   my $nh = 0;
+  my $dp=$d0; # prev depth
   foreach my $b (@{$data}){
     next unless $b->{type} eq 'head';
     $nh++;
     my ($d, $t) = ($b->{depth}, $b->{title});
-    if ($dp==$d0){ $dp=$d0=$d-1; }
     for (;$dp<$d;$dp++) {print $fh '  'x($dp-1) . "<ul>\n";}
     for (;$dp>$d;$dp--) {print $fh '  'x($dp-2) . "</ul>\n";}
     print $fh '  'x($d-1) . "<li><a href=\"#h$nh\">$t</a>\n";
