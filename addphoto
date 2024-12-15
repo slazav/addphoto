@@ -1469,6 +1469,7 @@ body {
   max-width:100%;
   height:auto;
   text-align:center;
+  padding:1ex 0;
 }
 .addphoto-img-center {
   display: inline-block;
