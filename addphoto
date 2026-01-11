@@ -1837,7 +1837,7 @@ if ($opts{html_headers}) {
   import PhotoSwipeLightbox from '$opts{pswp_url}/photoswipe-lightbox.esm.js';
   const lightbox = new PhotoSwipeLightbox({
     gallery: 'body',
-    children: 'a',
+    children: '.pswp_img',
     pswpModule: () => import('$opts{pswp_url}/photoswipe.esm.js')
   });
   lightbox.init();
@@ -1898,6 +1898,7 @@ foreach my $b (@data){
       $a_attrs .= " href='$htmfile'";
     }
     if ($opts{pswp}){
+      $a_attrs .= " class='pswp_img'";
       $a_attrs .= " data-pswp-width='$b->{img_w}'";
       $a_attrs .= " data-pswp-height='$b->{img_h}'";
     }
