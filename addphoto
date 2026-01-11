@@ -61,6 +61,7 @@ my %opts = (
   html_resize      => 1,
   pswp             => 0,
   pswp_url         => 'https://localhost/pswp',
+  pswp_bg_op       => 0.6,
   index            => 0,
 );
 Getopt::Long::Configure("no_ignore_case");
@@ -114,6 +115,7 @@ Getopt::Long::GetOptions(
   "html_resize:1"   => \$opts{html_resize},  # resizable images in html pages (default state of "size" button)
   "pswp:1"          => \$opts{pswp},         # use PhotoSwipe library
   "pswp_url=s"      => \$opts{pswp_url},     # url where PhotoSwipe is located
+  "pswp_bg_op=f"    => \$opts{pswp_bg_op},   # background opacity for PhotoSwipe gallery (default=0.6)
   "index:1"         => \$opts{index},        # use index file (default: do not use index)
 ) or die "bad option";
 
@@ -1838,7 +1840,8 @@ if ($opts{html_headers}) {
   const lightbox = new PhotoSwipeLightbox({
     gallery: 'body',
     children: '.pswp_img',
-    pswpModule: () => import('$opts{pswp_url}/photoswipe.esm.js')
+    pswpModule: () => import('$opts{pswp_url}/photoswipe.esm.js'),
+    bgOpacity: $opts{pswp_bg_op}
   });
   lightbox.init();
   </script>
