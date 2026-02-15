@@ -66,7 +66,7 @@ usage() if $opts{help};
 
 ## get image size (identify from ImageMagick is needed).
 sub image_size($){
-  `identify "$_[0]"` =~/(\d+)x(\d+)/;
+  `identify "$_[0]" 2> /dev/null` =~/\S+ \S+ (\d+)x(\d+) /;
   return ($1 || 0, $2 || 0);
 }
 
